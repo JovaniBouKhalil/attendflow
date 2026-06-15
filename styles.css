@@ -1,123 +1,238 @@
-/* ========================================
-   CSS Reset and Base Styles
-   ======================================== */
+/* ============================================================
+   Student Attendance Manager — Stylesheet
+   Task 10.1: Navigation, layout, base components, accessibility
+   ============================================================ */
 
-* {
-    margin: 0;
-    padding: 0;
-    box-sizing: border-box;
+/* ============================================================
+   1. CSS Custom Properties (design tokens)
+   ============================================================ */
+:root {
+    /* Brand colours */
+    --color-primary:      #2c3e50;
+    --color-primary-dark: #1a252f;
+    --color-accent:       #1abc9c;
+    --color-accent-dark:  #16a085;
+    --color-danger:       #e74c3c;
+    --color-danger-dark:  #c0392b;
+    --color-success:      #27ae60;
+    --color-success-dark: #219a52;
+    --color-warning:      #f39c12;
+    --color-info:         #3498db;
+    --color-info-dark:    #2980b9;
+
+    /* Neutrals */
+    --color-bg:           #f5f5f5;
+    --color-surface:      #ffffff;
+    --color-border:       #bdc3c7;
+    --color-border-light: #ecf0f1;
+    --color-text:         #333333;
+    --color-text-muted:   #7f8c8d;
+    --color-nav-bg:       #34495e;
+    --color-nav-hover:    #3d5a73;
+
+    /* Absence-rate indicator colours (Requirements 6.9, 7.3) */
+    --color-rate-low:     #27ae60;   /* 0 – 9.9 % */
+    --color-rate-mid:     #f39c12;   /* 10 – 29.9 % */
+    --color-rate-high:    #e74c3c;   /* ≥ 30 % */
+
+    /* Spacing */
+    --space-xs:  0.25rem;
+    --space-sm:  0.5rem;
+    --space-md:  1rem;
+    --space-lg:  1.5rem;
+    --space-xl:  2rem;
+
+    /* Typography */
+    --font-base: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto,
+                 Oxygen, Ubuntu, Cantarell, sans-serif;
+    --font-size-base: 16px;
+
+    /* Radii */
+    --radius-sm: 4px;
+    --radius-md: 8px;
+
+    /* Shadows */
+    --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.10);
+    --shadow-md: 0 2px 6px rgba(0, 0, 0, 0.15);
+    --shadow-lg: 0 4px 12px rgba(0, 0, 0, 0.12);
+
+    /* Focus ring */
+    --focus-ring: 0 0 0 3px rgba(26, 188, 156, 0.45);
+
+    /* Transitions */
+    --transition-fast: 150ms ease;
+    --transition-base: 250ms ease;
+
+    /* Layout */
+    --max-width: 1200px;
+    --header-height-mobile: auto;
 }
 
+/* ============================================================
+   2. CSS Reset
+   ============================================================ */
+*, *::before, *::after {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+}
+
+/* ============================================================
+   3. Base / Document
+   ============================================================ */
 html {
-    font-size: 16px;
+    font-size: var(--font-size-base);
     scroll-behavior: smooth;
+    -webkit-text-size-adjust: 100%;
 }
 
 body {
-    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+    font-family: var(--font-base);
     line-height: 1.6;
-    color: #333;
-    background-color: #f5f5f5;
+    color: var(--color-text);
+    background-color: var(--color-bg);
     min-height: 100vh;
     display: flex;
     flex-direction: column;
 }
 
-/* ========================================
-   Typography
-   ======================================== */
-
-h1, h2, h3, h4, h5, h6 {
-    margin-bottom: 1rem;
+/* ============================================================
+   4. Skip Link (accessibility — WCAG 2.4.1)
+   ============================================================ */
+.skip-link {
+    position: absolute;
+    top: -100%;
+    left: var(--space-md);
+    z-index: 9999;
+    background: var(--color-accent);
+    color: var(--color-surface);
+    padding: var(--space-sm) var(--space-md);
+    border-radius: var(--radius-sm);
     font-weight: 600;
-    line-height: 1.2;
+    text-decoration: none;
+    transition: top var(--transition-fast);
 }
 
-h1 {
-    font-size: 1.75rem;
+.skip-link:focus {
+    top: var(--space-md);
 }
 
-h2 {
-    font-size: 1.5rem;
+/* ============================================================
+   5. Typography
+   ============================================================ */
+h1, h2, h3, h4, h5, h6 {
+    font-weight: 600;
+    line-height: 1.25;
+    margin-bottom: var(--space-md);
+    color: var(--color-text);
 }
 
-h3 {
-    font-size: 1.25rem;
+h1 { font-size: 1.5rem; }
+h2 { font-size: 1.375rem; }
+h3 { font-size: 1.125rem; }
+
+p { margin-bottom: var(--space-md); }
+
+a {
+    color: var(--color-info);
+    text-decoration: none;
 }
 
-p {
-    margin-bottom: 1rem;
-}
+a:hover  { text-decoration: underline; }
+a:focus  { outline: none; box-shadow: var(--focus-ring); border-radius: var(--radius-sm); }
 
-/* ========================================
-   Header
-   ======================================== */
-
+/* ============================================================
+   6. Header
+   ============================================================ */
 header {
-    background-color: #2c3e50;
-    color: white;
-    padding: 1rem;
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    background-color: var(--color-primary);
+    color: var(--color-surface);
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+    position: sticky;
+    top: 0;
+    z-index: 100;
 }
 
-header h1 {
-    margin-bottom: 0.5rem;
-    font-size: 1.5rem;
+.header-inner {
+    max-width: var(--max-width);
+    margin: 0 auto;
+    padding: var(--space-md);
 }
 
-/* ========================================
-   Navigation Menu - Mobile First (<768px)
-   ======================================== */
+/* ---- App title ---- */
+.app-title {
+    display: flex;
+    align-items: center;
+    gap: var(--space-sm);
+    font-size: 1.25rem;
+    font-weight: 700;
+    color: var(--color-surface);
+    margin-bottom: var(--space-sm);
+}
 
+.app-icon {
+    flex-shrink: 0;
+    opacity: 0.9;
+}
+
+/* ============================================================
+   7. Primary Navigation — Mobile-first (<768 px)
+   Requirement 10.9, 10.10
+   ============================================================ */
 #main-nav {
     position: relative;
 }
 
+/* ---- Hamburger button ---- */
 .nav-toggle {
-    display: block;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    width: 28px;
+    height: 20px;
     background: none;
     border: none;
-    color: white;
-    font-size: 1.5rem;
     cursor: pointer;
-    padding: 0.5rem;
-    margin-top: 0.5rem;
+    padding: 0;
+    /* A button that only shows lines — give it a visible focus ring */
+}
+
+.nav-toggle:focus {
+    outline: none;
+    box-shadow: var(--focus-ring);
+    border-radius: var(--radius-sm);
 }
 
 .hamburger {
     display: block;
-    width: 25px;
+    width: 28px;
     height: 3px;
-    background-color: white;
-    position: relative;
+    background-color: var(--color-surface);
+    border-radius: 2px;
+    transition: transform var(--transition-fast), opacity var(--transition-fast);
+    pointer-events: none;
 }
 
-.hamburger::before,
-.hamburger::after {
-    content: '';
-    position: absolute;
-    width: 25px;
-    height: 3px;
-    background-color: white;
-    left: 0;
+/* Animate hamburger → X when menu is open */
+.nav-toggle[aria-expanded="true"] .hamburger:nth-child(1) {
+    transform: translateY(8.5px) rotate(45deg);
+}
+.nav-toggle[aria-expanded="true"] .hamburger:nth-child(2) {
+    opacity: 0;
+}
+.nav-toggle[aria-expanded="true"] .hamburger:nth-child(3) {
+    transform: translateY(-8.5px) rotate(-45deg);
 }
 
-.hamburger::before {
-    top: -8px;
-}
-
-.hamburger::after {
-    top: 8px;
-}
-
+/* ---- Menu list (collapsed by default on mobile) ---- */
 .nav-menu {
     list-style: none;
     display: none;
     flex-direction: column;
-    background-color: #34495e;
-    margin-top: 0.5rem;
-    border-radius: 4px;
+    background-color: var(--color-nav-bg);
+    border-radius: var(--radius-sm);
     overflow: hidden;
+    margin-top: var(--space-sm);
 }
 
 .nav-menu.open {
@@ -125,46 +240,84 @@ header h1 {
 }
 
 .nav-menu li {
-    border-bottom: 1px solid #2c3e50;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.07);
 }
 
 .nav-menu li:last-child {
     border-bottom: none;
 }
 
+/* ---- Nav links ---- */
 .nav-link {
-    display: block;
-    color: white;
+    display: flex;
+    align-items: center;
+    gap: var(--space-sm);
+    color: rgba(255, 255, 255, 0.85);
     text-decoration: none;
-    padding: 1rem;
-    transition: background-color 0.3s ease;
+    padding: var(--space-md);
+    font-size: 0.95rem;
+    transition: background-color var(--transition-fast), color var(--transition-fast);
 }
 
-.nav-link:hover,
+.nav-link:hover {
+    background-color: var(--color-nav-hover);
+    color: var(--color-surface);
+    text-decoration: none;
+}
+
 .nav-link:focus {
-    background-color: #3d5a73;
+    outline: none;
+    box-shadow: inset var(--focus-ring);
 }
 
+/* Active state — highlighted with accent colour (Requirement 10.2) */
 .nav-link.active {
-    background-color: #1abc9c;
+    background-color: var(--color-accent);
+    color: var(--color-surface);
     font-weight: 600;
 }
 
-/* ========================================
-   Navigation Menu - Desktop (≥768px)
-   ======================================== */
+.nav-link.active:hover {
+    background-color: var(--color-accent-dark);
+}
 
+/* Icon inside nav link */
+.nav-icon {
+    flex-shrink: 0;
+    opacity: 0.8;
+}
+
+/* ============================================================
+   8. Primary Navigation — Desktop (≥768 px)
+   Requirement 10.9
+   ============================================================ */
 @media (min-width: 768px) {
+    .header-inner {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: var(--space-md) var(--space-lg);
+    }
+
+    .app-title {
+        font-size: 1.4rem;
+        margin-bottom: 0;
+    }
+
+    /* Hide hamburger on desktop */
     .nav-toggle {
         display: none;
     }
 
+    /* Always-visible horizontal menu */
     .nav-menu {
-        display: flex;
+        display: flex !important;   /* override .open/.none for mobile */
         flex-direction: row;
         background-color: transparent;
-        margin-top: 0.5rem;
-        gap: 0.5rem;
+        margin-top: 0;
+        gap: var(--space-xs);
+        border-radius: 0;
+        overflow: visible;
     }
 
     .nav-menu li {
@@ -172,35 +325,38 @@ header h1 {
     }
 
     .nav-link {
-        padding: 0.75rem 1.5rem;
-        border-radius: 4px;
-    }
-
-    .nav-link.active {
-        background-color: #1abc9c;
+        padding: var(--space-sm) var(--space-md);
+        border-radius: var(--radius-sm);
+        font-size: 0.9rem;
     }
 }
 
-/* ========================================
-   Breadcrumb Navigation
-   ======================================== */
-
+/* ============================================================
+   9. Breadcrumb (Requirement 10.3)
+   ============================================================ */
 .breadcrumb {
-    background-color: #ecf0f1;
-    padding: 0.75rem 1rem;
-    font-size: 0.9rem;
-    display: none;
+    background-color: var(--color-border-light);
+    border-bottom: 1px solid var(--color-border);
+    display: none;                  /* hidden until detail view opens */
 }
 
 .breadcrumb.visible {
     display: block;
 }
 
+.breadcrumb-inner {
+    max-width: var(--max-width);
+    margin: 0 auto;
+    padding: var(--space-sm) var(--space-md);
+}
+
 .breadcrumb ol {
     list-style: none;
     display: flex;
     flex-wrap: wrap;
-    gap: 0.5rem;
+    align-items: center;
+    gap: var(--space-xs);
+    font-size: 0.875rem;
 }
 
 .breadcrumb li {
@@ -208,157 +364,190 @@ header h1 {
     align-items: center;
 }
 
+/* Separator arrow between crumbs */
 .breadcrumb li:not(:last-child)::after {
     content: '›';
-    margin-left: 0.5rem;
-    color: #7f8c8d;
+    margin-left: var(--space-xs);
+    color: var(--color-text-muted);
+    font-size: 1rem;
+    line-height: 1;
 }
 
 .breadcrumb a {
-    color: #3498db;
-    text-decoration: none;
+    color: var(--color-info);
 }
 
 .breadcrumb a:hover {
     text-decoration: underline;
 }
 
-.breadcrumb .current {
-    color: #333;
+.breadcrumb [aria-current="page"] {
+    color: var(--color-text);
     font-weight: 600;
+    pointer-events: none;
 }
 
-/* ========================================
-   Main Content
-   ======================================== */
-
+/* ============================================================
+   10. Main Content Area
+   ============================================================ */
 main {
     flex: 1;
-    max-width: 1200px;
+    max-width: var(--max-width);
     width: 100%;
     margin: 0 auto;
-    padding: 1.5rem 1rem;
+    padding: var(--space-lg) var(--space-md);
+    /* Receive focus when skip-link is activated */
+    outline: none;
 }
 
+/* Section visibility — only the active section is shown */
 .content-section {
     display: none;
-    animation: fadeIn 0.3s ease-in;
 }
 
 .content-section.active {
     display: block;
+    animation: sectionFadeIn 200ms ease-in;
 }
 
-@keyframes fadeIn {
-    from {
-        opacity: 0;
-    }
-    to {
-        opacity: 1;
-    }
+@keyframes sectionFadeIn {
+    from { opacity: 0; transform: translateY(4px); }
+    to   { opacity: 1; transform: translateY(0); }
 }
 
-/* ========================================
-   Footer
-   ======================================== */
+/* Section header — title row + action area */
+.section-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: var(--space-md);
+    margin-bottom: var(--space-lg);
+    padding-bottom: var(--space-md);
+    border-bottom: 2px solid var(--color-border-light);
+}
 
+.section-header h2 {
+    margin-bottom: 0;
+    color: var(--color-primary);
+}
+
+.section-body {
+    /* Placeholder for content injected by later tasks */
+}
+
+/* ============================================================
+   11. Footer
+   ============================================================ */
 footer {
-    background-color: #2c3e50;
-    color: white;
+    background-color: var(--color-primary);
+    color: rgba(255, 255, 255, 0.7);
     text-align: center;
-    padding: 1rem;
+    padding: var(--space-md);
     margin-top: auto;
+    font-size: 0.85rem;
 }
 
 footer p {
     margin: 0;
-    font-size: 0.9rem;
 }
 
-/* ========================================
-   Buttons
-   ======================================== */
-
-button {
+/* ============================================================
+   12. Buttons
+   ============================================================ */
+.btn {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--space-sm);
     font-family: inherit;
-    font-size: 1rem;
+    font-size: 0.9rem;
+    font-weight: 500;
+    line-height: 1;
     cursor: pointer;
     border: none;
-    border-radius: 4px;
-    padding: 0.5rem 1rem;
-    transition: background-color 0.3s ease, transform 0.1s ease;
+    border-radius: var(--radius-sm);
+    padding: 0.55rem var(--space-md);
+    text-decoration: none;
+    white-space: nowrap;
+    transition: background-color var(--transition-fast),
+                box-shadow      var(--transition-fast),
+                transform       var(--transition-fast);
+    user-select: none;
 }
 
-button:hover {
-    transform: translateY(-1px);
+.btn:focus {
+    outline: none;
+    box-shadow: var(--focus-ring);
 }
 
-button:active {
-    transform: translateY(0);
+.btn:active {
+    transform: translateY(1px);
 }
 
-button:focus {
-    outline: 2px solid #3498db;
-    outline-offset: 2px;
+.btn:disabled,
+.btn[aria-disabled="true"] {
+    opacity: 0.5;
+    cursor: not-allowed;
+    pointer-events: none;
 }
 
+/* Variants */
 .btn-primary {
-    background-color: #3498db;
-    color: white;
+    background-color: var(--color-info);
+    color: var(--color-surface);
 }
-
-.btn-primary:hover {
-    background-color: #2980b9;
-}
+.btn-primary:hover { background-color: var(--color-info-dark); }
 
 .btn-success {
-    background-color: #27ae60;
-    color: white;
+    background-color: var(--color-success);
+    color: var(--color-surface);
 }
-
-.btn-success:hover {
-    background-color: #229954;
-}
+.btn-success:hover { background-color: var(--color-success-dark); }
 
 .btn-danger {
-    background-color: #e74c3c;
-    color: white;
+    background-color: var(--color-danger);
+    color: var(--color-surface);
 }
-
-.btn-danger:hover {
-    background-color: #c0392b;
-}
+.btn-danger:hover { background-color: var(--color-danger-dark); }
 
 .btn-secondary {
-    background-color: #95a5a6;
-    color: white;
+    background-color: transparent;
+    color: var(--color-text);
+    border: 1px solid var(--color-border);
 }
+.btn-secondary:hover { background-color: var(--color-border-light); }
 
-.btn-secondary:hover {
-    background-color: #7f8c8d;
+.btn-icon {
+    padding: var(--space-sm);
+    border-radius: var(--radius-sm);
+    background: transparent;
+    border: none;
+    cursor: pointer;
+    color: var(--color-text-muted);
+    transition: color var(--transition-fast), background-color var(--transition-fast);
 }
+.btn-icon:hover  { color: var(--color-text); background-color: var(--color-border-light); }
+.btn-icon:focus  { outline: none; box-shadow: var(--focus-ring); }
 
-/* ========================================
-   Forms
-   ======================================== */
-
-form {
-    background-color: white;
-    padding: 1.5rem;
-    border-radius: 8px;
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-    margin-bottom: 1.5rem;
-}
-
+/* ============================================================
+   13. Form Elements
+   ============================================================ */
 .form-group {
-    margin-bottom: 1rem;
+    margin-bottom: var(--space-md);
 }
 
 label {
     display: block;
-    margin-bottom: 0.25rem;
+    margin-bottom: var(--space-xs);
     font-weight: 600;
-    color: #2c3e50;
+    font-size: 0.9rem;
+    color: var(--color-primary);
+}
+
+label .required-marker {
+    color: var(--color-danger);
+    margin-left: var(--space-xs);
+    aria-hidden: true;
 }
 
 input[type="text"],
@@ -367,19 +556,37 @@ input[type="date"],
 textarea,
 select {
     width: 100%;
-    padding: 0.5rem;
-    border: 1px solid #bdc3c7;
-    border-radius: 4px;
+    padding: 0.5rem var(--space-sm);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-sm);
     font-family: inherit;
     font-size: 1rem;
-    transition: border-color 0.3s ease;
+    color: var(--color-text);
+    background-color: var(--color-surface);
+    transition: border-color var(--transition-fast), box-shadow var(--transition-fast);
+    /* Prevent layout shift when border widens on focus */
 }
 
 input:focus,
 textarea:focus,
 select:focus {
     outline: none;
-    border-color: #3498db;
+    border-color: var(--color-accent);
+    box-shadow: 0 0 0 3px rgba(26, 188, 156, 0.25);
+}
+
+input[aria-invalid="true"],
+textarea[aria-invalid="true"],
+select[aria-invalid="true"] {
+    border-color: var(--color-danger);
+}
+
+input:disabled,
+textarea:disabled,
+select:disabled {
+    background-color: var(--color-border-light);
+    cursor: not-allowed;
+    color: var(--color-text-muted);
 }
 
 textarea {
@@ -388,150 +595,188 @@ textarea {
 }
 
 .form-error {
-    color: #e74c3c;
-    font-size: 0.875rem;
-    margin-top: 0.25rem;
-    display: block;
+    display: flex;
+    align-items: center;
+    gap: var(--space-xs);
+    color: var(--color-danger);
+    font-size: 0.8rem;
+    margin-top: var(--space-xs);
 }
 
-/* ========================================
-   Cards and Lists
-   ======================================== */
+.form-hint {
+    color: var(--color-text-muted);
+    font-size: 0.8rem;
+    margin-top: var(--space-xs);
+}
 
+/* ============================================================
+   14. Cards
+   ============================================================ */
 .card {
-    background-color: white;
-    border-radius: 8px;
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-    padding: 1rem;
-    margin-bottom: 1rem;
+    background-color: var(--color-surface);
+    border-radius: var(--radius-md);
+    box-shadow: var(--shadow-sm);
+    padding: var(--space-md);
+    margin-bottom: var(--space-md);
 }
 
-.list {
+/* ============================================================
+   15. List Items
+   ============================================================ */
+.list-group {
     list-style: none;
 }
 
 .list-item {
-    background-color: white;
-    border-radius: 4px;
-    padding: 1rem;
-    margin-bottom: 0.5rem;
-    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+    background-color: var(--color-surface);
+    border-radius: var(--radius-sm);
+    padding: var(--space-md);
+    margin-bottom: var(--space-sm);
+    box-shadow: var(--shadow-sm);
     display: flex;
     justify-content: space-between;
     align-items: center;
+    gap: var(--space-md);
+    transition: box-shadow var(--transition-fast);
 }
 
 .list-item:hover {
-    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
+    box-shadow: var(--shadow-md);
 }
 
-/* ========================================
-   Tables
-   ======================================== */
+/* ============================================================
+   16. Tables
+   ============================================================ */
+.table-wrapper {
+    width: 100%;
+    overflow-x: auto;          /* horizontal scroll on small screens */
+    border-radius: var(--radius-md);
+    box-shadow: var(--shadow-sm);
+}
 
 table {
     width: 100%;
     border-collapse: collapse;
-    background-color: white;
-    border-radius: 8px;
-    overflow: hidden;
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    background-color: var(--color-surface);
+    font-size: 0.9rem;
 }
 
 thead {
-    background-color: #34495e;
-    color: white;
+    background-color: var(--color-primary);
+    color: var(--color-surface);
 }
 
-th,
-td {
-    padding: 0.75rem;
+th {
+    padding: var(--space-sm) var(--space-md);
     text-align: left;
-    border-bottom: 1px solid #ecf0f1;
+    font-weight: 600;
+    white-space: nowrap;
 }
 
-tbody tr:hover {
-    background-color: #f8f9fa;
+td {
+    padding: var(--space-sm) var(--space-md);
+    border-bottom: 1px solid var(--color-border-light);
+    vertical-align: middle;
 }
 
 tbody tr:last-child td {
     border-bottom: none;
 }
 
-/* ========================================
-   Responsive Layout
-   ======================================== */
+tbody tr:hover {
+    background-color: #f8f9fa;
+}
 
+/* ============================================================
+   17. Absence-rate colour badges (Requirement 6.9, 7.3)
+   Used in reports and student lists to colour-code the rate.
+   ============================================================ */
+.rate-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--space-xs);
+    font-weight: 600;
+    font-size: 0.85rem;
+    padding: 2px 8px;
+    border-radius: 999px;
+}
+
+.rate-low  { background-color: #d5f5e3; color: var(--color-rate-low); }
+.rate-mid  { background-color: #fdebd0; color: var(--color-warning);  }
+.rate-high { background-color: #fadbd8; color: var(--color-rate-high); }
+
+/* At-risk warning icon (Requirement 7.3) */
+.at-risk-icon {
+    display: inline-flex;
+    align-items: center;
+    color: var(--color-danger);
+    margin-left: var(--space-xs);
+    vertical-align: middle;
+}
+
+/* ============================================================
+   18. Empty-state placeholder
+   ============================================================ */
+.empty-state {
+    text-align: center;
+    padding: var(--space-xl) var(--space-md);
+    color: var(--color-text-muted);
+}
+
+.empty-state-icon {
+    font-size: 3rem;
+    margin-bottom: var(--space-md);
+    opacity: 0.4;
+}
+
+.empty-state p {
+    font-size: 0.95rem;
+    margin: 0;
+}
+
+/* ============================================================
+   19. Utility Classes
+   ============================================================ */
+.sr-only {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip: rect(0 0 0 0);
+    white-space: nowrap;
+}
+
+.hidden       { display: none !important; }
+.text-center  { text-align: center; }
+.text-muted   { color: var(--color-text-muted); }
+.text-danger  { color: var(--color-danger); }
+.text-success { color: var(--color-success); }
+.fw-bold      { font-weight: 600; }
+.w-100        { width: 100%; }
+
+/* Spacing helpers */
+.mt-1 { margin-top:    var(--space-sm); }
+.mt-2 { margin-top:    var(--space-md); }
+.mb-1 { margin-bottom: var(--space-sm); }
+.mb-2 { margin-bottom: var(--space-md); }
+
+/* Flex helpers */
+.d-flex          { display: flex; }
+.flex-wrap       { flex-wrap: wrap; }
+.align-center    { align-items: center; }
+.justify-between { justify-content: space-between; }
+.gap-1           { gap: var(--space-sm); }
+.gap-2           { gap: var(--space-md); }
+
+/* ============================================================
+   20. Responsive overrides (≥768 px)
+   ============================================================ */
 @media (min-width: 768px) {
-    html {
-        font-size: 18px;
-    }
-
-    header h1 {
-        font-size: 2rem;
-    }
+    h1 { font-size: 1.75rem; }
+    h2 { font-size: 1.5rem; }
+    h3 { font-size: 1.25rem; }
 
     main {
-        padding: 2rem 1.5rem;
+        padding: var(--space-xl) var(--space-lg);
     }
-
-    form {
-        padding: 2rem;
-    }
-}
-
-/* ========================================
-   Utility Classes
-   ======================================== */
-
-.hidden {
-    display: none;
-}
-
-.text-center {
-    text-align: center;
-}
-
-.mt-1 {
-    margin-top: 0.5rem;
-}
-
-.mt-2 {
-    margin-top: 1rem;
-}
-
-.mb-1 {
-    margin-bottom: 0.5rem;
-}
-
-.mb-2 {
-    margin-bottom: 1rem;
-}
-
-.flex {
-    display: flex;
-}
-
-.flex-row {
-    flex-direction: row;
-}
-
-.flex-col {
-    flex-direction: column;
-}
-
-.gap-1 {
-    gap: 0.5rem;
-}
-
-.gap-2 {
-    gap: 1rem;
-}
-
-.justify-between {
-    justify-content: space-between;
-}
-
-.items-center {
-    align-items: center;
 }
