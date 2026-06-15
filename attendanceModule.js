@@ -334,3 +334,51 @@ function getCourseAttendance(courseCode) {
         return [];
     }
 }
+
+// ─── Absence Rate Calculation (Task 7.3) ────────────────────────────────────
+
+/**
+ * Calculate the absence rate for a student in a specific course.
+ * Absence rate = (absences / totalSessions) * 100, rounded to 1 decimal place.
+ * Requirements: 6.1, 6.3, 6.8
+ *
+ * @param {string} studentId  - Student ID
+ * @param {string} courseCode - Course code
+ * @returns {Object} {
+ *   totalSessions: number,   // count of attendance records for the pair
+ *   absences:      number,   // count of 'absent' records
+ *   presences:     number,   // count of 'present' records
+ *   rate:          number|null  // absence rate %, 1 decimal; null when no sessions
+ * }
+ */
+function calculateAbsenceRate(studentId, courseCode) {
+    try {
+        const loadResult = loadData();
+        if (!loadResult.success) {
+            return { totalSessions: 0, absences: 0, presences: 0, rate: null };
+        }
+
+        const courseRecords = loadResult.data.attendanceRecords.filter(
+            r => r.studentId === studentId && r.courseCode === courseCode
+        );
+
+        const totalSessions = courseRecords.length;
+
+        // No sessions -> rate is undefined/N-A (Requirement 6.8 zero-session edge case)
+        if (totalSessions === 0) {
+            return { totalSessions: 0, absences: 0, presences: 0, rate: null };
+        }
+
+        const absences  = courseRecords.filter(r => r.status === 'absent').length;
+        const presences = courseRecords.filter(r => r.status === 'present').length;
+
+        // Round to 1 decimal place (Requirement 6.8)
+        const rate = Math.round((absences / totalSessions) * 1000) / 10;
+
+        return { totalSessions, absences, presences, rate };
+
+    } catch (error) {
+        console.error('Error calculating absence rate:', error);
+        return { totalSessions: 0, absences: 0, presences: 0, rate: null };
+    }
+}
