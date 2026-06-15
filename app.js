@@ -45,7 +45,10 @@ function initializeApp() {
     // 2. Wire navigation
     initializeNavigation();
 
-    // 3. Show the default section
+    // 3. Render section UIs
+    renderStudentSection();
+
+    // 4. Show the default section
     navigateTo('students');
 }
 
