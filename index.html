@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Student Attendance Manager</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <header>
+        <h1>Student Attendance Manager</h1>
+        <nav id="main-nav">
+            <button class="nav-toggle" aria-label="Toggle navigation menu">
+                <span class="hamburger"></span>
+            </button>
+            <ul class="nav-menu">
+                <li><a href="#students" class="nav-link active" data-section="students">Students</a></li>
+                <li><a href="#courses" class="nav-link" data-section="courses">Courses</a></li>
+                <li><a href="#attendance" class="nav-link" data-section="attendance">Attendance Recording</a></li>
+                <li><a href="#reports" class="nav-link" data-section="reports">Reports</a></li>
+            </ul>
+        </nav>
+    </header>
+
+    <nav class="breadcrumb" id="breadcrumb" aria-label="Breadcrumb">
+        <!-- Breadcrumb navigation will be dynamically inserted here -->
+    </nav>
+
+    <main id="main-content">
+        <!-- Dynamic content sections will be loaded here -->
+        <section id="students-section" class="content-section active">
+            <h2>Students</h2>
+            <div id="students-content">
+                <!-- Student management UI will be inserted here -->
+            </div>
+        </section>
+
+        <section id="courses-section" class="content-section">
+            <h2>Courses</h2>
+            <div id="courses-content">
+                <!-- Course management UI will be inserted here -->
+            </div>
+        </section>
+
+        <section id="attendance-section" class="content-section">
+            <h2>Attendance Recording</h2>
+            <div id="attendance-content">
+                <!-- Attendance recording UI will be inserted here -->
+            </div>
+        </section>
+
+        <section id="reports-section" class="content-section">
+            <h2>Reports</h2>
+            <div id="reports-content">
+                <!-- Reports and statistics UI will be inserted here -->
+            </div>
+        </section>
+    </main>
+
+    <footer>
+        <p>&copy; 2024 Student Attendance Manager. All data stored locally in your browser.</p>
+    </footer>
+
+    <!-- Scripts -->
+    <script src="utils.js"></script>
+    <script src="storage.js"></script>
+    <script src="app.js"></script>
+</body>
+</html>
