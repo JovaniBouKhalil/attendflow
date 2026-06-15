@@ -206,6 +206,47 @@
     </footer>
 
     <!-- =====================================================================
+         Toast notification container
+         Toasts are appended here by showSuccess() / showError()
+         Individual toasts carry role="status" (success) or role="alert" (error)
+         ===================================================================== -->
+    <div id="toast-container"
+         class="toast-container"
+         aria-live="polite"
+         aria-atomic="false">
+    </div>
+
+    <!-- =====================================================================
+         Loading overlay
+         Shown by showLoading(), hidden by hideLoading()
+         ===================================================================== -->
+    <div id="loading-overlay"
+         class="loading-overlay hidden"
+         aria-hidden="true">
+        <div class="loading-spinner" aria-hidden="true"></div>
+        <span class="loading-text">Loading&hellip;</span>
+    </div>
+
+    <!-- =====================================================================
+         Confirmation dialog (modal)
+         Populated and opened by showConfirmDialog()
+         ===================================================================== -->
+    <div id="confirm-overlay" class="modal-overlay hidden">
+        <dialog id="confirm-dialog"
+                class="confirm-dialog"
+                aria-modal="true"
+                aria-labelledby="confirm-title"
+                aria-describedby="confirm-message">
+            <h3 id="confirm-title"   class="confirm-title">Confirm</h3>
+            <p  id="confirm-message" class="confirm-message"></p>
+            <div class="confirm-actions">
+                <button id="confirm-cancel" class="btn btn-secondary" type="button">Cancel</button>
+                <button id="confirm-ok"     class="btn btn-danger"    type="button">Confirm</button>
+            </div>
+        </dialog>
+    </div>
+
+    <!-- =====================================================================
          Scripts  (dependency order: utils → models → storage → modules → app)
          ===================================================================== -->
     <script src="utils.js"></script>

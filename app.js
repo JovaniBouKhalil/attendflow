@@ -277,11 +277,253 @@ function escapeHTML(str) {
         .replace(/'/g,  '&#39;');
 }
 
-// Placeholder stubs for notification functions — implemented in Task 10.2
-function showError(message)   { console.error('[Error]',   message); }
-function showSuccess(message) { console.log  ('[Success]', message); }
-function showLoading()        { /* Task 10.2 */ }
-function hideLoading()        { /* Task 10.2 */ }
+// ─── Notifications & Loading (Task 10.2) ─────────────────────────────────────
+
+/** Duration in ms that a success toast stays visible (Requirement 10.5) */
+const TOAST_SUCCESS_DURATION = 3000;
+
+/** Auto-dismiss delay for error toasts (0 = persistent until dismissed) */
+const TOAST_ERROR_DURATION = 0;
+
+/** Active loading call counter — supports nested showLoading/hideLoading calls */
+let _loadingDepth = 0;
+
+/** setTimeout id for the pending loading display (100 ms threshold, Req 10.4) */
+let _loadingTimer = null;
+
+/**
+ * Show a success toast that auto-dismisses after 3 seconds.
+ * Requirement: 10.5
+ *
+ * @param {string} message - Human-readable success text
+ */
+function showSuccess(message) {
+    _createToast(message, 'success', TOAST_SUCCESS_DURATION);
+}
+
+/**
+ * Show a persistent error toast (stays until dismissed by the user).
+ * Requirement: 10.6
+ *
+ * @param {string} message - Human-readable error text
+ */
+function showError(message) {
+    _createToast(message, 'error', TOAST_ERROR_DURATION);
+}
+
+/**
+ * Build and inject a toast notification into #toast-container.
+ *
+ * @param {string} message      - Text to display
+ * @param {'success'|'error'} type - Visual style
+ * @param {number} duration     - Auto-dismiss ms; 0 = persistent
+ */
+function _createToast(message, type, duration) {
+    const container = document.getElementById('toast-container');
+    if (!container) return;
+
+    const toast = document.createElement('div');
+    toast.className = `toast toast-${type}`;
+
+    // ARIA: success uses role="status" (polite), error uses role="alert" (assertive)
+    toast.setAttribute('role', type === 'error' ? 'alert' : 'status');
+    toast.setAttribute('aria-live', type === 'error' ? 'assertive' : 'polite');
+
+    // SVG icon (inline, aria-hidden)
+    const iconSVG = type === 'success'
+        ? `<svg class="toast-icon" aria-hidden="true" focusable="false"
+                xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"
+                width="20" height="20" fill="currentColor">
+               <path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/>
+           </svg>`
+        : `<svg class="toast-icon" aria-hidden="true" focusable="false"
+                xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"
+                width="20" height="20" fill="currentColor">
+               <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48
+                        10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z"/>
+           </svg>`;
+
+    toast.innerHTML = `
+        ${iconSVG}
+        <span class="toast-message">${escapeHTML(message)}</span>
+        <button class="toast-close"
+                type="button"
+                aria-label="Dismiss notification">
+            &times;
+        </button>`;
+
+    container.appendChild(toast);
+
+    // Wire dismiss button
+    const closeBtn = toast.querySelector('.toast-close');
+    closeBtn.addEventListener('click', () => _dismissToast(toast));
+
+    // Auto-dismiss
+    if (duration > 0) {
+        setTimeout(() => _dismissToast(toast), duration);
+    }
+}
+
+/**
+ * Animate a toast out, then remove it from the DOM.
+ * @param {HTMLElement} toast
+ */
+function _dismissToast(toast) {
+    if (!toast || !toast.parentNode) return;
+    toast.classList.add('toast-exit');
+    toast.addEventListener('animationend', () => {
+        if (toast.parentNode) toast.parentNode.removeChild(toast);
+    }, { once: true });
+}
+
+/**
+ * Show the loading overlay.
+ * The overlay appears only after a 100 ms threshold to avoid flickering
+ * on fast operations (Requirement 10.4).
+ * Supports nested calls — the overlay stays until every showLoading() has
+ * a matching hideLoading().
+ */
+function showLoading() {
+    _loadingDepth++;
+
+    if (_loadingDepth === 1 && !_loadingTimer) {
+        _loadingTimer = setTimeout(() => {
+            const overlay = document.getElementById('loading-overlay');
+            if (overlay) {
+                overlay.classList.remove('hidden');
+                overlay.removeAttribute('aria-hidden');
+                // Prevent focus from reaching content beneath (modern browsers)
+                document.body.setAttribute('inert-loading', '');
+            }
+            _loadingTimer = null;
+        }, 100);
+    }
+}
+
+/**
+ * Hide the loading overlay.
+ * Only actually hides when every showLoading() call has been matched.
+ */
+function hideLoading() {
+    _loadingDepth = Math.max(0, _loadingDepth - 1);
+
+    if (_loadingDepth === 0) {
+        // Cancel the pending show if it hasn't fired yet
+        if (_loadingTimer) {
+            clearTimeout(_loadingTimer);
+            _loadingTimer = null;
+        }
+
+        const overlay = document.getElementById('loading-overlay');
+        if (overlay) {
+            overlay.classList.add('hidden');
+            overlay.setAttribute('aria-hidden', 'true');
+            document.body.removeAttribute('inert-loading');
+        }
+    }
+}
+
+/**
+ * Show a confirmation dialog and return a Promise that resolves to true
+ * (confirmed) or false (cancelled).
+ *
+ * Requirements: 1.11 (delete student), 2.19 (delete course)
+ *
+ * @param {Object} options
+ * @param {string} options.title    - Dialog heading
+ * @param {string} options.message  - Body text (may contain the record count)
+ * @param {string} [options.confirmLabel='Confirm'] - OK button label
+ * @param {string} [options.cancelLabel='Cancel']   - Cancel button label
+ * @param {'danger'|'primary'} [options.confirmStyle='danger'] - OK button style
+ * @returns {Promise<boolean>}
+ */
+function showConfirmDialog({
+    title         = 'Confirm',
+    message       = 'Are you sure?',
+    confirmLabel  = 'Confirm',
+    cancelLabel   = 'Cancel',
+    confirmStyle  = 'danger'
+} = {}) {
+    return new Promise(resolve => {
+        const overlay   = document.getElementById('confirm-overlay');
+        const dialog    = document.getElementById('confirm-dialog');
+        const titleEl   = document.getElementById('confirm-title');
+        const messageEl = document.getElementById('confirm-message');
+        const okBtn     = document.getElementById('confirm-ok');
+        const cancelBtn = document.getElementById('confirm-cancel');
+
+        if (!overlay || !dialog) {
+            // Fallback for environments where the dialog isn't in DOM
+            resolve(window.confirm(`${title}\n\n${message}`));
+            return;
+        }
+
+        // Populate content
+        titleEl.textContent   = title;
+        messageEl.textContent = message;
+        okBtn.textContent     = confirmLabel;
+        cancelBtn.textContent = cancelLabel;
+
+        // OK button style
+        okBtn.className = `btn btn-${confirmStyle}`;
+
+        // Show
+        overlay.classList.remove('hidden');
+        // Use the native <dialog> open attribute if supported
+        if (typeof dialog.showModal === 'function') {
+            dialog.showModal();
+        }
+
+        // Move focus to the Cancel button (safer default — prevents accidental confirm)
+        cancelBtn.focus();
+
+        // ── Event handlers ────────────────────────────────────────
+        function close(result) {
+            overlay.classList.add('hidden');
+            if (typeof dialog.close === 'function') dialog.close();
+
+            // Clean up listeners
+            okBtn.removeEventListener('click', onOk);
+            cancelBtn.removeEventListener('click', onCancel);
+            overlay.removeEventListener('click', onOverlayClick);
+            document.removeEventListener('keydown', onKeyDown);
+
+            resolve(result);
+        }
+
+        function onOk()         { close(true);  }
+        function onCancel()     { close(false); }
+
+        // Clicking the overlay backdrop cancels
+        function onOverlayClick(e) {
+            if (e.target === overlay) close(false);
+        }
+
+        // Escape cancels (Requirement 10.7 — keyboard support)
+        function onKeyDown(e) {
+            if (e.key === 'Escape') { e.preventDefault(); close(false); }
+
+            // Trap focus inside the dialog (WCAG 2.1.2)
+            if (e.key === 'Tab') {
+                const focusable = dialog.querySelectorAll(
+                    'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])'
+                );
+                const first = focusable[0];
+                const last  = focusable[focusable.length - 1];
+                if (e.shiftKey && document.activeElement === first) {
+                    e.preventDefault(); last.focus();
+                } else if (!e.shiftKey && document.activeElement === last) {
+                    e.preventDefault(); first.focus();
+                }
+            }
+        }
+
+        okBtn.addEventListener('click',     onOk);
+        cancelBtn.addEventListener('click', onCancel);
+        overlay.addEventListener('click',   onOverlayClick);
+        document.addEventListener('keydown', onKeyDown);
+    });
+}
 
 // ─── Init ─────────────────────────────────────────────────────────────────────
 
