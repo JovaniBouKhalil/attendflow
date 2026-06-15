@@ -242,3 +242,73 @@ function getStudentSummaries() {
         return [];
     }
 }
+
+// ─── At-Risk List Generation (Task 8.2) ─────────────────────────────────────
+
+/**
+ * Generate the list of all student-course combinations currently at-risk.
+ * A combination is at-risk when the student's absence rate in the course is
+ * >= 30.0%. The list is sorted by absence rate descending.
+ * Requirements: 7.4, 7.5, 7.6
+ *
+ * @returns {Array<Object>} One entry per at-risk student-course combination:
+ *   {
+ *     studentId, studentName,
+ *     courseCode, courseName,
+ *     totalSessions, absences, presences,
+ *     absenceRate          // number, 1 decimal place
+ *   }
+ *   Sorted by absenceRate descending. Empty array if none.
+ */
+function getAtRiskList() {
+    try {
+        const loadResult = loadData();
+        if (!loadResult.success) return [];
+
+        const { students, courses, attendanceRecords } = loadResult.data;
+
+        const atRiskEntries = [];
+
+        for (const student of students) {
+            // Distinct courses this student has records in
+            const courseCodes = [
+                ...new Set(
+                    attendanceRecords
+                        .filter(r => r.studentId === student.studentId)
+                        .map(r => r.courseCode)
+                )
+            ];
+
+            for (const courseCode of courseCodes) {
+                const stats = calculateAbsenceRate(student.studentId, courseCode);
+
+                // Skip zero-session pairs (rate null) and below-threshold pairs
+                if (stats.rate === null || stats.rate < 30.0) {
+                    continue;
+                }
+
+                const course = courses.find(c => c.courseCode === courseCode) || null;
+
+                atRiskEntries.push({
+                    studentId:     student.studentId,
+                    studentName:   student.name,
+                    courseCode:    courseCode,
+                    courseName:    course ? course.name : courseCode,
+                    totalSessions: stats.totalSessions,
+                    absences:      stats.absences,
+                    presences:     stats.presences,
+                    absenceRate:   stats.rate
+                });
+            }
+        }
+
+        // Sort by absence rate descending (Requirement 7.6)
+        atRiskEntries.sort((a, b) => b.absenceRate - a.absenceRate);
+
+        return atRiskEntries;
+
+    } catch (error) {
+        console.error('Error generating at-risk list:', error);
+        return [];
+    }
+}
