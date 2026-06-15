@@ -328,3 +328,88 @@ function searchStudents(searchText) {
         return [];
     }
 }
+
+/**
+ * Get all students currently marked as at-risk in at least one course
+ * A student is at-risk when their absence rate in a course is >= 30.0%
+ * Absence rate = (absences / totalSessions) * 100
+ * Requirements: 5.5, 5.6, 7.1, 7.2, 7.3, 7.4, 7.5, 7.6, 7.7, 7.8, 7.9
+ *
+ * @returns {Array<Object>} Array of at-risk entries, each containing:
+ *   { student: Object, courseCode: string, absenceRate: number }
+ *   Sorted by absenceRate descending (Requirement 7.6)
+ */
+function getAtRiskStudents() {
+    try {
+        const loadResult = loadData();
+        if (!loadResult.success) {
+            return [];
+        }
+
+        const { students, courses, attendanceRecords } = loadResult.data;
+
+        const atRiskEntries = [];
+
+        // Evaluate every student against every course that has records for them
+        for (const student of students) {
+            // Collect unique course codes this student has attendance records in
+            const courseCodes = [
+                ...new Set(
+                    attendanceRecords
+                        .filter(r => r.studentId === student.studentId)
+                        .map(r => r.courseCode)
+                )
+            ];
+
+            for (const courseCode of courseCodes) {
+                const courseRecords = attendanceRecords.filter(
+                    r => r.studentId === student.studentId && r.courseCode === courseCode
+                );
+
+                const totalSessions = courseRecords.length;
+
+                // Requirement 7.9: no at-risk status when zero records exist
+                if (totalSessions === 0) {
+                    continue;
+                }
+
+                const absences = courseRecords.filter(r => r.status === 'absent').length;
+                const absenceRate = Math.round((absences / totalSessions) * 1000) / 10; // 1 decimal place
+
+                // Requirement 7.1: at-risk when absence rate >= 30.0%
+                if (absenceRate >= 30.0) {
+                    // Resolve course name for display (Requirement 7.5)
+                    const course = courses.find(c => c.courseCode === courseCode) || null;
+
+                    atRiskEntries.push({
+                        student: student,
+                        courseCode: courseCode,
+                        courseName: course ? course.name : courseCode,
+                        absenceRate: absenceRate
+                    });
+                }
+            }
+        }
+
+        // Requirement 7.6: sort by absence rate descending
+        atRiskEntries.sort((a, b) => b.absenceRate - a.absenceRate);
+
+        return atRiskEntries;
+
+    } catch (error) {
+        console.error('Error getting at-risk students:', error);
+        return [];
+    }
+}
+
+/**
+ * Check whether a specific student is at-risk in at least one course
+ * Used by the student list UI to decide whether to show the warning icon
+ * Requirement: 7.3
+ *
+ * @param {string} studentId - Student ID to check
+ * @returns {boolean} True if the student is at-risk in any course
+ */
+function isStudentAtRisk(studentId) {
+    return getAtRiskStudents().some(entry => entry.student.studentId === studentId);
+}
