@@ -382,3 +382,89 @@ function calculateAbsenceRate(studentId, courseCode) {
         return { totalSessions: 0, absences: 0, presences: 0, rate: null };
     }
 }
+
+// ─── At-Risk Status & Statistics Recalculation (Task 7.4) ───────────────────
+
+/**
+ * The absence-rate threshold (percent) at or above which a student is
+ * considered at-risk of dropping a course.
+ * Requirement: 7.1
+ */
+const AT_RISK_THRESHOLD = 30.0;
+
+/**
+ * Determine whether a student is at-risk in a specific course.
+ * A student is at-risk when their absence rate in the course is >= 30.0%.
+ * A student with zero recorded sessions is never at-risk (Requirement 7.9).
+ * Requirements: 7.1, 7.2, 7.9
+ *
+ * @param {string} studentId  - Student ID
+ * @param {string} courseCode - Course code
+ * @returns {boolean} True if the student is at-risk in the course
+ */
+function calculateAtRiskStatus(studentId, courseCode) {
+    try {
+        const stats = calculateAbsenceRate(studentId, courseCode);
+
+        // No sessions -> rate is null -> never at-risk (Requirement 7.9)
+        if (stats.rate === null) {
+            return false;
+        }
+
+        // At-risk when absence rate meets or exceeds the threshold (Requirement 7.1)
+        return stats.rate >= AT_RISK_THRESHOLD;
+
+    } catch (error) {
+        console.error('Error calculating at-risk status:', error);
+        return false;
+    }
+}
+
+/**
+ * Recalculate the current statistics for a student in a course.
+ *
+ * Absence rate and at-risk status are computed values that are NOT persisted;
+ * they are always derived on demand from the attendance records. This function
+ * provides a single entry point that callers invoke after any attendance
+ * record is added, updated, or deleted, returning the freshly computed
+ * statistics so the UI can update immediately.
+ *
+ * Requirements: 3.10, 4.11, 7.7, 7.8
+ *
+ * @param {string} studentId  - Student ID
+ * @param {string} courseCode - Course code
+ * @returns {Object} {
+ *   studentId, courseCode,
+ *   totalSessions, absences, presences,
+ *   rate,        // absence rate %, 1 decimal, or null when no sessions
+ *   isAtRisk     // boolean
+ * }
+ */
+function recalculateStatistics(studentId, courseCode) {
+    try {
+        const stats = calculateAbsenceRate(studentId, courseCode);
+        const isAtRisk = stats.rate === null ? false : stats.rate >= AT_RISK_THRESHOLD;
+
+        return {
+            studentId:     studentId,
+            courseCode:    courseCode,
+            totalSessions: stats.totalSessions,
+            absences:      stats.absences,
+            presences:     stats.presences,
+            rate:          stats.rate,
+            isAtRisk:      isAtRisk
+        };
+
+    } catch (error) {
+        console.error('Error recalculating statistics:', error);
+        return {
+            studentId:     studentId,
+            courseCode:    courseCode,
+            totalSessions: 0,
+            absences:      0,
+            presences:     0,
+            rate:          null,
+            isAtRisk:      false
+        };
+    }
+}
