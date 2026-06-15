@@ -337,3 +337,468 @@ function _getInitials(name) {
     if (parts.length === 1) return parts[0][0].toUpperCase();
     return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
 }
+
+// ─── Task 11.2: Add / Edit forms, Detail view, Delete workflow ────────────────
+
+/**
+ * Open the student form modal.
+ * When studentId is provided it populates the form for editing;
+ * when omitted it opens a blank Add form.
+ * Requirements: 1.1, 1.2, 1.3, 1.6, 1.7, 1.8, 9.12
+ *
+ * @param {string|null} studentId - Student ID to edit, or null/undefined for Add
+ */
+function openStudentForm(studentId) {
+    const isEdit   = Boolean(studentId);
+    const student  = isEdit ? getStudent(studentId) : null;
+
+    // If editing but student not found, bail gracefully
+    if (isEdit && !student) {
+        showError('Student not found.');
+        return;
+    }
+
+    const title = isEdit ? 'Edit Student' : 'Add Student';
+
+    const modalHTML = `
+        <div id="student-form-overlay" class="modal-overlay" role="presentation">
+            <dialog id="student-form-dialog"
+                    class="student-form-dialog"
+                    aria-modal="true"
+                    aria-labelledby="student-form-title">
+
+                <div class="dialog-header">
+                    <h3 id="student-form-title" class="dialog-title">
+                        ${escapeHTML(title)}
+                    </h3>
+                    <button class="btn btn-icon dialog-close"
+                            type="button"
+                            id="student-form-close"
+                            aria-label="Close dialog">
+                        <svg aria-hidden="true" focusable="false"
+                             xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"
+                             width="20" height="20" fill="currentColor">
+                            <path d="M19 6.41L17.59 5 12 10.59 6.41 5 5
+                                     6.41 10.59 12 5 17.59 6.41 19 12
+                                     13.41 17.59 19 19 17.59 13.41 12z"/>
+                        </svg>
+                    </button>
+                </div>
+
+                <form id="student-form" novalidate autocomplete="off">
+
+                    <!-- Name -->
+                    <div class="form-group">
+                        <label for="sf-name">
+                            Full Name
+                            <span class="required-marker" aria-hidden="true">*</span>
+                        </label>
+                        <input type="text"
+                               id="sf-name"
+                               name="name"
+                               maxlength="100"
+                               autocomplete="off"
+                               aria-required="true"
+                               aria-describedby="sf-name-error"
+                               value="${escapeHTML(student ? student.name : '')}">
+                        <span id="sf-name-error"
+                              class="form-error hidden"
+                              role="alert"
+                              aria-live="polite"></span>
+                    </div>
+
+                    <!-- Student ID — disabled in edit mode (Requirement 9.12) -->
+                    <div class="form-group">
+                        <label for="sf-student-id">
+                            Student ID
+                            <span class="required-marker" aria-hidden="true">*</span>
+                        </label>
+                        <input type="text"
+                               id="sf-student-id"
+                               name="studentId"
+                               maxlength="50"
+                               autocomplete="off"
+                               aria-required="true"
+                               aria-describedby="sf-id-hint sf-id-error"
+                               ${isEdit ? 'disabled aria-disabled="true"' : ''}
+                               value="${escapeHTML(student ? student.studentId : '')}">
+                        ${isEdit
+                            ? `<span id="sf-id-hint" class="form-hint">
+                                   Student ID cannot be changed after creation.
+                               </span>`
+                            : `<span id="sf-id-hint" class="form-hint">
+                                   1–50 characters. Must be unique.
+                               </span>`}
+                        <span id="sf-id-error"
+                              class="form-error hidden"
+                              role="alert"
+                              aria-live="polite"></span>
+                    </div>
+
+                    <!-- Email -->
+                    <div class="form-group">
+                        <label for="sf-email">
+                            Email Address
+                            <span class="required-marker" aria-hidden="true">*</span>
+                        </label>
+                        <input type="email"
+                               id="sf-email"
+                               name="email"
+                               autocomplete="off"
+                               aria-required="true"
+                               aria-describedby="sf-email-error"
+                               value="${escapeHTML(student ? student.email : '')}">
+                        <span id="sf-email-error"
+                              class="form-error hidden"
+                              role="alert"
+                              aria-live="polite"></span>
+                    </div>
+
+                    <!-- Form-level error summary -->
+                    <div id="sf-form-error"
+                         class="form-error-summary hidden"
+                         role="alert"
+                         aria-live="assertive"></div>
+
+                    <div class="dialog-actions">
+                        <button type="button"
+                                id="sf-cancel"
+                                class="btn btn-secondary">
+                            Cancel
+                        </button>
+                        <button type="submit"
+                                id="sf-submit"
+                                class="btn btn-primary">
+                            ${isEdit ? 'Save Changes' : 'Add Student'}
+                        </button>
+                    </div>
+                </form>
+            </dialog>
+        </div>`;
+
+    // Inject modal into body
+    document.body.insertAdjacentHTML('beforeend', modalHTML);
+
+    const overlay = document.getElementById('student-form-overlay');
+    const dialog  = document.getElementById('student-form-dialog');
+    const form    = document.getElementById('student-form');
+
+    // Open native dialog if supported
+    if (typeof dialog.showModal === 'function') dialog.showModal();
+
+    // Focus first editable field
+    const firstInput = isEdit
+        ? document.getElementById('sf-name')
+        : document.getElementById('sf-name');
+    if (firstInput) firstInput.focus();
+
+    // ── Submit ──────────────────────────────────────────────────────────────
+    form.addEventListener('submit', e => {
+        e.preventDefault();
+        _handleStudentFormSubmit(isEdit, student ? student.studentId : null);
+    });
+
+    // ── Cancel / close ──────────────────────────────────────────────────────
+    function closeModal() {
+        if (typeof dialog.close === 'function') dialog.close();
+        overlay.remove();
+    }
+
+    document.getElementById('sf-cancel').addEventListener('click', closeModal);
+    document.getElementById('student-form-close').addEventListener('click', closeModal);
+
+    // Escape key
+    dialog.addEventListener('keydown', e => {
+        if (e.key === 'Escape') { e.preventDefault(); closeModal(); }
+        _trapFocus(e, dialog);
+    });
+
+    // Click backdrop
+    overlay.addEventListener('click', e => {
+        if (e.target === overlay) closeModal();
+    });
+}
+
+/**
+ * Process the student form submission.
+ * Validates, calls the appropriate module function, shows feedback.
+ *
+ * @param {boolean}     isEdit    - True if editing an existing student
+ * @param {string|null} studentId - Existing student ID (edit only)
+ */
+function _handleStudentFormSubmit(isEdit, studentId) {
+    // Clear previous errors
+    _clearFormErrors('sf');
+
+    const name  = document.getElementById('sf-name').value;
+    const rawId = document.getElementById('sf-student-id').value;
+    const email = document.getElementById('sf-email').value;
+
+    // In edit mode the ID field is disabled; use the original ID
+    const id = isEdit ? studentId : rawId;
+
+    showLoading();
+
+    let result;
+    if (isEdit) {
+        result = updateStudent(studentId, { name, email });
+    } else {
+        result = addStudent(name, email, id);
+    }
+
+    hideLoading();
+
+    if (!result.success) {
+        _displayFormErrors('sf', result.errors);
+        return;
+    }
+
+    // Close modal
+    const overlay = document.getElementById('student-form-overlay');
+    const dialog  = document.getElementById('student-form-dialog');
+    if (dialog && typeof dialog.close === 'function') dialog.close();
+    if (overlay) overlay.remove();
+
+    // Refresh list + toast
+    refreshStudentList();
+    showSuccess(isEdit
+        ? `Student "${result.student.name}" updated successfully.`
+        : `Student "${result.student.name}" added successfully.`
+    );
+}
+
+// ─── Student detail view ──────────────────────────────────────────────────────
+
+/**
+ * Open the full student detail view.
+ * Replaces the fallback introduced in Task 11.1.
+ * Requirements: 1.5, 7.3
+ *
+ * @param {string} studentId
+ */
+function openStudentDetail(studentId) {
+    const student = getStudent(studentId);
+    if (!student) {
+        showError('Student not found.');
+        return;
+    }
+
+    navigateToDetail('students', student.name);
+
+    const atRisk       = isStudentAtRisk(studentId);
+    const atRiskBadge  = atRisk ? _buildAtRiskBadge() : '';
+    const atRiskNote   = atRisk
+        ? `<p class="at-risk-note text-danger">
+               <svg aria-hidden="true" focusable="false"
+                    xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"
+                    width="16" height="16" fill="currentColor">
+                   <path d="M1 21h22L12 2 1 21zm12-3h-2v-2h2v2zm0-4h-2v-4h2v4z"/>
+               </svg>
+               This student is at-risk (absence rate ≥ 30 %) in at least one course.
+           </p>`
+        : '';
+
+    const output = document.getElementById('student-list-output');
+    output.innerHTML = `
+        <div class="student-detail-card card"
+             role="region"
+             aria-labelledby="detail-heading">
+
+            <div class="student-detail-card__header">
+                <div class="student-avatar student-avatar--lg" aria-hidden="true">
+                    ${_getInitials(student.name)}
+                </div>
+                <div>
+                    <h3 id="detail-heading" class="student-detail-card__name">
+                        ${escapeHTML(student.name)}
+                        ${atRiskBadge}
+                    </h3>
+                    ${atRiskNote}
+                </div>
+            </div>
+
+            <dl class="student-detail-card__fields">
+                <dt>Student ID</dt>
+                <dd>${escapeHTML(student.studentId)}</dd>
+
+                <dt>Email</dt>
+                <dd>
+                    <a href="mailto:${escapeHTML(student.email)}">
+                        ${escapeHTML(student.email)}
+                    </a>
+                </dd>
+            </dl>
+
+            <div class="student-detail-card__actions">
+                <button class="btn btn-secondary"
+                        type="button"
+                        id="btn-back-to-list"
+                        aria-label="Back to student list">
+                    ← Back to Students
+                </button>
+                <button class="btn btn-primary"
+                        type="button"
+                        id="btn-detail-edit"
+                        aria-label="Edit ${escapeHTML(student.name)}">
+                    Edit
+                </button>
+                <button class="btn btn-danger"
+                        type="button"
+                        id="btn-detail-delete"
+                        aria-label="Delete ${escapeHTML(student.name)}">
+                    Delete
+                </button>
+            </div>
+        </div>`;
+
+    document.getElementById('btn-back-to-list').addEventListener('click', () => {
+        navigateTo('students');
+        refreshStudentList();
+    });
+
+    document.getElementById('btn-detail-edit').addEventListener('click', () => {
+        openStudentForm(studentId);
+    });
+
+    document.getElementById('btn-detail-delete').addEventListener('click', () => {
+        handleDeleteStudent(studentId);
+    });
+}
+
+// ─── Delete workflow ──────────────────────────────────────────────────────────
+
+/**
+ * Confirm and delete a student.
+ * Requirements: 1.9, 1.10, 1.11
+ *
+ * @param {string} studentId
+ */
+async function handleDeleteStudent(studentId) {
+    const student = getStudent(studentId);
+    if (!student) {
+        showError('Student not found.');
+        return;
+    }
+
+    // Load current data to show record count in confirmation (Requirement 1.11)
+    const loadResult = loadData();
+    const attendanceCount = loadResult.success
+        ? loadResult.data.attendanceRecords.filter(r => r.studentId === studentId).length
+        : 0;
+
+    const countNote = attendanceCount > 0
+        ? ` This will also delete ${attendanceCount} attendance record${attendanceCount !== 1 ? 's' : ''}.`
+        : '';
+
+    const confirmed = await showConfirmDialog({
+        title:        'Delete Student',
+        message:      `Delete "${student.name}"?${countNote}`,
+        confirmLabel: 'Delete',
+        cancelLabel:  'Cancel',
+        confirmStyle: 'danger'
+    });
+
+    if (!confirmed) return;
+
+    showLoading();
+    const result = deleteStudent(studentId);
+    hideLoading();
+
+    if (!result.success) {
+        showError('Failed to delete student: ' + result.errors.map(e => e.message).join(', '));
+        return;
+    }
+
+    showSuccess(`Student "${student.name}" deleted.`);
+
+    // Return to list (handles case where delete was triggered from detail view)
+    navigateTo('students');
+    refreshStudentList();
+}
+
+// ─── Form helpers ─────────────────────────────────────────────────────────────
+
+/**
+ * Clear all field-level and form-level errors for a given form prefix.
+ * @param {string} prefix - e.g. 'sf' for the student form
+ */
+function _clearFormErrors(prefix) {
+    ['name', 'id', 'email'].forEach(field => {
+        const el = document.getElementById(`${prefix}-${field}-error`);
+        if (el) { el.textContent = ''; el.classList.add('hidden'); }
+        // Remove aria-invalid from the corresponding input
+        const input = document.querySelector(`[aria-describedby~="${prefix}-${field}-error"]`);
+        if (input) input.removeAttribute('aria-invalid');
+    });
+
+    const summary = document.getElementById(`${prefix}-form-error`);
+    if (summary) { summary.textContent = ''; summary.classList.add('hidden'); }
+}
+
+/**
+ * Display field-level validation errors returned from a module function.
+ * Requirements: 1.3, 1.8, 9.11
+ *
+ * @param {string} prefix - Form prefix ('sf')
+ * @param {Array<{field: string, message: string}>} errors
+ */
+function _displayFormErrors(prefix, errors) {
+    // Map module field names to form element suffixes
+    const fieldMap = { name: 'name', studentId: 'id', email: 'email' };
+
+    let firstErrorInput = null;
+
+    errors.forEach(err => {
+        const suffix  = fieldMap[err.field];
+        const errorEl = suffix ? document.getElementById(`${prefix}-${suffix}-error`) : null;
+        const inputEl = suffix
+            ? document.querySelector(`[aria-describedby~="${prefix}-${suffix}-error"]`)
+            : null;
+
+        if (errorEl) {
+            errorEl.textContent = err.message;
+            errorEl.classList.remove('hidden');
+        }
+        if (inputEl) {
+            inputEl.setAttribute('aria-invalid', 'true');
+            if (!firstErrorInput) firstErrorInput = inputEl;
+        }
+    });
+
+    // Fallback: show any unmapped errors in the form-level summary
+    const unmapped = errors.filter(e => !fieldMap[e.field]);
+    if (unmapped.length > 0) {
+        const summary = document.getElementById(`${prefix}-form-error`);
+        if (summary) {
+            summary.textContent = unmapped.map(e => e.message).join(' ');
+            summary.classList.remove('hidden');
+        }
+    }
+
+    // Move focus to the first invalid input
+    if (firstErrorInput) firstErrorInput.focus();
+}
+
+/**
+ * Trap keyboard focus inside a dialog element.
+ * Requirements: 10.7 (keyboard navigation), WCAG 2.1.2
+ *
+ * @param {KeyboardEvent} e
+ * @param {HTMLElement}   dialog
+ */
+function _trapFocus(e, dialog) {
+    if (e.key !== 'Tab') return;
+    const focusable = Array.from(dialog.querySelectorAll(
+        'button:not([disabled]), [href], input:not([disabled]), ' +
+        'select:not([disabled]), textarea:not([disabled]), ' +
+        '[tabindex]:not([tabindex="-1"])'
+    ));
+    if (focusable.length === 0) return;
+    const first = focusable[0];
+    const last  = focusable[focusable.length - 1];
+    if (e.shiftKey && document.activeElement === first) {
+        e.preventDefault(); last.focus();
+    } else if (!e.shiftKey && document.activeElement === last) {
+        e.preventDefault(); first.focus();
+    }
+}
