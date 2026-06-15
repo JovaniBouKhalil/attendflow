@@ -54,6 +54,9 @@ function renderStudentSection() {
         });
     }
 
+    // Render search / filter bar (Task 11.3)
+    renderStudentFilterBar();
+
     // Initial list render
     refreshStudentList();
 }
@@ -62,11 +65,17 @@ function renderStudentSection() {
 
 /**
  * Re-render the student list inside #student-list-output.
- * Reads directly from getAllStudents() and isStudentAtRisk() so it always
- * reflects the current data state.
+ * Routes through _applyFilters() so active search/filter state is preserved.
  * Requirements: 1.4, 7.3
  */
 function refreshStudentList() {
+    // If filters are active, re-apply them; otherwise render the full list
+    const hasFilter = _studentFilter.searchText !== '' || _studentFilter.atRiskOnly;
+    if (hasFilter) {
+        _applyFilters();
+        return;
+    }
+
     const output = document.getElementById('student-list-output');
     if (!output) return;
 
@@ -801,4 +810,214 @@ function _trapFocus(e, dialog) {
     } else if (!e.shiftKey && document.activeElement === last) {
         e.preventDefault(); first.focus();
     }
+}
+
+// ─── Task 11.3: Search, Filter, and No-Results State ─────────────────────────
+
+/**
+ * Active filter state.
+ * Mutated by the search input and at-risk toggle; read by _applyFilters().
+ */
+const _studentFilter = {
+    searchText: '',
+    atRiskOnly: false
+};
+
+/**
+ * Mount the search + filter bar into #student-filter-bar.
+ * Called by renderStudentSection() once the container exists.
+ * Requirements: 5.1, 5.5, 5.9
+ */
+function renderStudentFilterBar() {
+    const bar = document.getElementById('student-filter-bar');
+    if (!bar) return;
+
+    bar.innerHTML = `
+        <div class="filter-bar" role="search" aria-label="Search and filter students">
+
+            <!-- Search input (Requirement 5.1) -->
+            <div class="filter-bar__search">
+                <label for="student-search" class="sr-only">Search students</label>
+                <div class="search-input-wrapper">
+                    <svg class="search-icon" aria-hidden="true" focusable="false"
+                         xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"
+                         width="18" height="18" fill="currentColor">
+                        <path d="M15.5 14h-.79l-.28-.27A6.47 6.47 0 0 0 16
+                                 9.5 6.5 6.5 0 1 0 9.5 16c1.61 0 3.09-.59
+                                 4.23-1.57l.27.28v.79l5 4.99L20.49
+                                 19l-4.99-5zm-6 0C7.01 14 5 11.99 5
+                                 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99
+                                 14 9.5 14z"/>
+                    </svg>
+                    <input type="search"
+                           id="student-search"
+                           class="search-input"
+                           placeholder="Search by name or ID…"
+                           autocomplete="off"
+                           aria-controls="student-list-output"
+                           aria-label="Search students by name or ID">
+                </div>
+            </div>
+
+            <!-- At-risk filter toggle (Requirement 5.5) -->
+            <div class="filter-bar__filters">
+                <label class="filter-toggle" for="filter-at-risk">
+                    <input type="checkbox"
+                           id="filter-at-risk"
+                           class="filter-toggle__checkbox"
+                           aria-controls="student-list-output"
+                           aria-label="Show only at-risk students">
+                    <svg class="filter-toggle__icon" aria-hidden="true" focusable="false"
+                         xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"
+                         width="16" height="16" fill="currentColor">
+                        <path d="M1 21h22L12 2 1 21zm12-3h-2v-2h2v2zm0-4h-2v-4h2v4z"/>
+                    </svg>
+                    At-risk only
+                </label>
+            </div>
+
+            <!-- Clear button (Requirement 5.9) -->
+            <button id="btn-clear-filters"
+                    class="btn btn-secondary filter-bar__clear hidden"
+                    type="button"
+                    aria-label="Clear all search and filter criteria">
+                Clear
+            </button>
+        </div>
+
+        <!-- Live result count for screen readers (Requirement 5.8) -->
+        <p id="student-results-count"
+           class="results-count sr-only"
+           role="status"
+           aria-live="polite"
+           aria-atomic="true"></p>`;
+
+    _wireFilterBar();
+}
+
+/**
+ * Wire event listeners for the search input, at-risk checkbox, and clear button.
+ */
+function _wireFilterBar() {
+    const searchInput  = document.getElementById('student-search');
+    const atRiskToggle = document.getElementById('filter-at-risk');
+    const clearBtn     = document.getElementById('btn-clear-filters');
+
+    if (!searchInput || !atRiskToggle || !clearBtn) return;
+
+    // Search — debounced at 500 ms (Requirement 5.3)
+    const debouncedSearch = debounce(value => {
+        _studentFilter.searchText = value.trim();
+        _applyFilters();
+    }, 500);
+
+    searchInput.addEventListener('input', e => {
+        debouncedSearch(e.target.value);
+        _updateClearButtonVisibility();
+    });
+
+    // At-risk toggle (Requirement 5.5, 5.6)
+    atRiskToggle.addEventListener('change', () => {
+        _studentFilter.atRiskOnly = atRiskToggle.checked;
+        _applyFilters();
+        _updateClearButtonVisibility();
+    });
+
+    // Clear (Requirement 5.9, 5.10)
+    clearBtn.addEventListener('click', () => {
+        searchInput.value          = '';
+        atRiskToggle.checked       = false;
+        _studentFilter.searchText  = '';
+        _studentFilter.atRiskOnly  = false;
+        _applyFilters();
+        _updateClearButtonVisibility();
+        searchInput.focus();       // return focus to search field
+    });
+}
+
+/**
+ * Apply the current filter state and re-render the list output.
+ * Requirements: 5.2, 5.3, 5.4, 5.6, 5.7, 5.8
+ */
+function _applyFilters() {
+    const output = document.getElementById('student-list-output');
+    if (!output) return;
+
+    // Start with all students
+    let students = getAllStudents();
+
+    // Text filter — case-insensitive partial match on name or student ID
+    // (Requirement 5.2, 5.4)
+    if (_studentFilter.searchText !== '') {
+        const query = _studentFilter.searchText.toLowerCase();
+        students = students.filter(s =>
+            s.name.toLowerCase().includes(query) ||
+            s.studentId.toLowerCase().includes(query)
+        );
+    }
+
+    // At-risk filter — AND logic when combined with search (Requirement 5.7)
+    if (_studentFilter.atRiskOnly) {
+        students = students.filter(s => isStudentAtRisk(s.studentId));
+    }
+
+    // No results (Requirement 5.8)
+    if (students.length === 0) {
+        const isFiltered = _studentFilter.searchText !== '' || _studentFilter.atRiskOnly;
+        output.innerHTML = isFiltered
+            ? _buildNoResultsState()
+            : _buildEmptyState();
+        _updateResultCount(0);
+        return;
+    }
+
+    // Sort alphabetically for stable display
+    students = students.slice().sort((a, b) => a.name.localeCompare(b.name));
+
+    output.innerHTML = `
+        <ul class="student-list" role="list" aria-label="Student roster">
+            ${students.map(s => _buildStudentCard(s)).join('')}
+        </ul>`;
+
+    _wireStudentCardButtons(students);
+    _updateResultCount(students.length);
+}
+
+/**
+ * Show/hide the Clear button based on whether any filter is active.
+ * Requirement: 5.9
+ */
+function _updateClearButtonVisibility() {
+    const clearBtn = document.getElementById('btn-clear-filters');
+    if (!clearBtn) return;
+    const hasFilter = _studentFilter.searchText !== '' || _studentFilter.atRiskOnly;
+    clearBtn.classList.toggle('hidden', !hasFilter);
+}
+
+/**
+ * Update the screen-reader-only result count announcement.
+ * @param {number} count
+ */
+function _updateResultCount(count) {
+    const el = document.getElementById('student-results-count');
+    if (!el) return;
+    el.textContent = count === 1
+        ? '1 student found'
+        : `${count} students found`;
+}
+
+/**
+ * Build the "no results" state shown when filters match nothing.
+ * Requirement: 5.8
+ * @returns {string} HTML string
+ */
+function _buildNoResultsState() {
+    return `
+        <div class="empty-state" role="status" aria-live="polite">
+            <div class="empty-state-icon" aria-hidden="true">🔍</div>
+            <p class="fw-bold">No students found</p>
+            <p class="text-muted">
+                Try a different search term or clear the filters.
+            </p>
+        </div>`;
 }

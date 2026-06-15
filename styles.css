@@ -1242,3 +1242,130 @@ tbody tr:hover {
     font-size: 0.85rem;
     margin: var(--space-xs) 0 0;
 }
+
+/* ============================================================
+   Task 11.3 — Search / Filter Bar
+   ============================================================ */
+
+/* ── Filter bar wrapper ──────────────────────────────────── */
+.filter-bar {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: var(--space-sm);
+    margin-bottom: var(--space-md);
+    padding: var(--space-sm) var(--space-md);
+    background: var(--color-surface);
+    border-radius: var(--radius-md);
+    box-shadow: var(--shadow-sm);
+}
+
+/* ── Search field ────────────────────────────────────────── */
+.filter-bar__search {
+    flex: 1 1 220px;
+    min-width: 0;
+}
+
+.search-input-wrapper {
+    position: relative;
+    display: flex;
+    align-items: center;
+}
+
+.search-icon {
+    position: absolute;
+    left: 0.6rem;
+    color: var(--color-text-muted);
+    pointer-events: none;
+    flex-shrink: 0;
+}
+
+.search-input {
+    width: 100%;
+    padding: 0.45rem 0.75rem 0.45rem 2.25rem;
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-sm);
+    font-family: inherit;
+    font-size: 0.9rem;
+    background: var(--color-surface);
+    transition: border-color var(--transition-fast), box-shadow var(--transition-fast);
+}
+
+/* Remove the native ✕ button that Chrome/Safari add to [type=search] */
+.search-input::-webkit-search-cancel-button { display: none; }
+
+.search-input:focus {
+    outline: none;
+    border-color: var(--color-accent);
+    box-shadow: 0 0 0 3px rgba(26, 188, 156, 0.25);
+}
+
+/* ── At-risk toggle checkbox ─────────────────────────────── */
+.filter-bar__filters {
+    display: flex;
+    align-items: center;
+    gap: var(--space-sm);
+    flex-shrink: 0;
+}
+
+.filter-toggle {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--space-xs);
+    font-size: 0.875rem;
+    font-weight: 500;
+    color: var(--color-text);
+    cursor: pointer;
+    user-select: none;
+    padding: 0.4rem 0.75rem;
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-sm);
+    background: var(--color-surface);
+    transition: background-color var(--transition-fast),
+                border-color    var(--transition-fast);
+}
+
+.filter-toggle:hover {
+    background-color: var(--color-border-light);
+}
+
+.filter-toggle__checkbox {
+    /* Visually hidden but still accessible */
+    position: absolute;
+    opacity: 0;
+    width: 0;
+    height: 0;
+}
+
+/* Highlight the toggle when the checkbox is checked */
+.filter-toggle:has(.filter-toggle__checkbox:checked) {
+    background-color: #fadbd8;
+    border-color: var(--color-danger);
+    color: var(--color-danger);
+}
+
+.filter-toggle__icon {
+    flex-shrink: 0;
+    color: var(--color-danger);
+}
+
+/* Focus ring visible on the label when the hidden checkbox is focused */
+.filter-toggle__checkbox:focus-visible + .filter-toggle__icon {
+    outline: none;
+}
+
+.filter-toggle:focus-within {
+    box-shadow: var(--focus-ring);
+}
+
+/* ── Clear button ────────────────────────────────────────── */
+.filter-bar__clear {
+    flex-shrink: 0;
+    font-size: 0.875rem;
+    padding: 0.4rem 0.9rem;
+}
+
+/* ── Results count (sr-only — announced to screen readers) ── */
+.results-count {
+    /* Uses .sr-only utility — no visual output */
+}
