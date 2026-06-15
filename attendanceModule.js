@@ -205,3 +205,132 @@ function updateAttendanceRecord(recordId, status) {
         };
     }
 }
+
+// ─── Attendance History Queries (Task 7.2) ──────────────────────────────────
+
+/**
+ * Get all attendance records for a specific student, grouped by course.
+ * Within each course group, records are sorted by date descending.
+ * Requirements: 4.1, 4.2, 4.6, 4.8
+ *
+ * @param {string} studentId - Student ID whose history is requested
+ * @returns {Array<Object>} Array of course groups, each:
+ *   {
+ *     courseCode: string,
+ *     courseName: string,
+ *     records: Array<Object>   // attendance records, date descending
+ *   }
+ *   Groups are ordered by courseName ascending. Empty array if none.
+ */
+function getStudentAttendance(studentId) {
+    try {
+        const loadResult = loadData();
+        if (!loadResult.success) return [];
+
+        const { courses, attendanceRecords } = loadResult.data;
+
+        // All records for this student
+        const studentRecords = attendanceRecords.filter(r => r.studentId === studentId);
+        if (studentRecords.length === 0) {
+            return [];
+        }
+
+        // Group by course code
+        const groupsByCode = {};
+        for (const record of studentRecords) {
+            if (!groupsByCode[record.courseCode]) {
+                groupsByCode[record.courseCode] = [];
+            }
+            groupsByCode[record.courseCode].push(record);
+        }
+
+        // Build group objects with course name + sorted records
+        const groups = Object.keys(groupsByCode).map(courseCode => {
+            const course = courses.find(c => c.courseCode === courseCode) || null;
+            const records = groupsByCode[courseCode]
+                .slice()
+                .sort((a, b) => b.date.localeCompare(a.date)); // date descending
+
+            return {
+                courseCode: courseCode,
+                courseName: course ? course.name : courseCode,
+                records: records
+            };
+        });
+
+        // Order groups by course name ascending for stable display
+        groups.sort((a, b) => a.courseName.localeCompare(b.courseName));
+
+        return groups;
+
+    } catch (error) {
+        console.error('Error getting student attendance:', error);
+        return [];
+    }
+}
+
+/**
+ * Get all attendance records for a specific course, grouped by date.
+ * Date groups are ordered by date descending; within each date, records are
+ * ordered by student name ascending for stable display.
+ * Requirements: 4.3, 4.4, 4.6, 4.8
+ *
+ * @param {string} courseCode - Course code whose history is requested
+ * @returns {Array<Object>} Array of date groups, each:
+ *   {
+ *     date: string,            // YYYY-MM-DD
+ *     records: Array<Object>   // attendance records for that date
+ *   }
+ *   Empty array if no records exist for the course.
+ */
+function getCourseAttendance(courseCode) {
+    try {
+        const loadResult = loadData();
+        if (!loadResult.success) return [];
+
+        const { students, attendanceRecords } = loadResult.data;
+
+        // All records for this course
+        const courseRecords = attendanceRecords.filter(r => r.courseCode === courseCode);
+        if (courseRecords.length === 0) {
+            return [];
+        }
+
+        // Lookup map for student names (avoids repeated find calls)
+        const nameByStudentId = {};
+        for (const student of students) {
+            nameByStudentId[student.studentId] = student.name;
+        }
+
+        // Group by date
+        const groupsByDate = {};
+        for (const record of courseRecords) {
+            if (!groupsByDate[record.date]) {
+                groupsByDate[record.date] = [];
+            }
+            groupsByDate[record.date].push(record);
+        }
+
+        // Build group objects, records sorted by student name ascending
+        const groups = Object.keys(groupsByDate).map(date => {
+            const records = groupsByDate[date]
+                .slice()
+                .sort((a, b) => {
+                    const nameA = nameByStudentId[a.studentId] || a.studentId;
+                    const nameB = nameByStudentId[b.studentId] || b.studentId;
+                    return nameA.localeCompare(nameB);
+                });
+
+            return { date: date, records: records };
+        });
+
+        // Order date groups by date descending (Requirement 4.8)
+        groups.sort((a, b) => b.date.localeCompare(a.date));
+
+        return groups;
+
+    } catch (error) {
+        console.error('Error getting course attendance:', error);
+        return [];
+    }
+}
