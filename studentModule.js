@@ -290,3 +290,41 @@ function deleteStudent(studentId) {
         };
     }
 }
+
+/**
+ * Search students by name or student ID
+ * Filtering is case-insensitive and matches partial strings
+ * Requirements: 5.1, 5.2, 5.3, 5.4
+ *
+ * @param {string} searchText - Text to search for in name or student ID
+ * @returns {Array<Object>} Array of matching student objects (empty if none found)
+ */
+function searchStudents(searchText) {
+    try {
+        const loadResult = loadData();
+        if (!loadResult.success) {
+            return [];
+        }
+
+        const students = loadResult.data.students;
+
+        // Empty or whitespace-only query returns all students (Requirement 5.4)
+        const trimmedText = trimWhitespace(searchText);
+        if (isEmpty(trimmedText)) {
+            return students;
+        }
+
+        // Normalise to lowercase once for comparison (Requirement 5.2)
+        const query = trimmedText.toLowerCase();
+
+        return students.filter(student => {
+            const nameMatch    = student.name.toLowerCase().includes(query);
+            const idMatch      = student.studentId.toLowerCase().includes(query);
+            return nameMatch || idMatch;
+        });
+
+    } catch (error) {
+        console.error('Error searching students:', error);
+        return [];
+    }
+}
