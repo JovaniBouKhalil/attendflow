@@ -432,10 +432,6 @@ main {
     color: var(--color-primary);
 }
 
-.section-body {
-    /* Placeholder for content injected by later tasks */
-}
-
 /* ============================================================
    11. Footer
    ============================================================ */
@@ -547,7 +543,6 @@ label {
 label .required-marker {
     color: var(--color-danger);
     margin-left: var(--space-xs);
-    aria-hidden: true;
 }
 
 input[type="text"],
@@ -1365,10 +1360,8 @@ tbody tr:hover {
     padding: 0.4rem 0.9rem;
 }
 
-/* ── Results count (sr-only — announced to screen readers) ── */
-.results-count {
-    /* Uses .sr-only utility — no visual output */
-}
+/* ── Results count (sr-only — announced to screen readers) ──
+   Styling handled by the .sr-only utility class in the markup. */
 
 /* ============================================================
    Task 12.1 — Course List UI
@@ -1456,6 +1449,7 @@ tbody tr:hover {
     /* Clamp long descriptions to two lines in the list */
     display: -webkit-box;
     -webkit-line-clamp: 2;
+    line-clamp: 2;
     -webkit-box-orient: vertical;
     overflow: hidden;
 }
@@ -2099,4 +2093,203 @@ tbody tr:hover {
 /* Inline at-risk badge spacing within a table cell */
 .at-risk-row .at-risk-badge {
     margin-right: var(--space-xs);
+}
+
+/* ============================================================
+   Task 18 — Polish: Responsive, Accessibility, Consistency
+   This section is additive. It refines tokens, focus states,
+   contrast, touch targets, and small-screen behaviour without
+   altering component structure.
+   ============================================================ */
+
+/* ── 18.1 Contrast refinements (WCAG 1.4.3) ──────────────────
+   The original muted grey (#7f8c8d) fell just under 4.5:1 on
+   white. Darkened for AA-compliant body text. The mid-rate
+   badge text is also darkened for legibility on its tint.    */
+:root {
+    --color-text-muted: #5b6770;   /* ~4.7:1 on #fff */
+}
+
+.rate-mid {
+    color: #9c6a05;                /* darker amber for AA on #fdebd0 */
+}
+
+/* ── 18.2 Reduced-motion support (WCAG 2.3.3) ────────────────
+   Honour users who prefer less animation.                     */
+@media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+        scroll-behavior: auto !important;
+    }
+}
+
+/* ── 18.3 Focus-visible refinement (WCAG 2.4.7) ──────────────
+   Show the focus ring only for keyboard users, not on mouse
+   clicks, while keeping a strong, consistent indicator.       */
+:focus:not(:focus-visible) {
+    outline: none;
+    box-shadow: none;
+}
+
+a:focus-visible,
+button:focus-visible,
+.btn:focus-visible,
+input:focus-visible,
+select:focus-visible,
+textarea:focus-visible,
+.report-tab:focus-visible,
+.nav-toggle:focus-visible,
+.filter-toggle:focus-within {
+    outline: none;
+    box-shadow: var(--focus-ring);
+}
+
+/* Nav links use an inset ring so it isn't clipped by the bar */
+.nav-link:focus-visible {
+    outline: none;
+    box-shadow: inset var(--focus-ring);
+}
+
+/* ── 18.4 Touch targets on small screens (WCAG 2.5.5) ────────
+   Ensure interactive controls meet the 44×44px guideline on
+   touch viewports.                                            */
+@media (max-width: 768px) {
+    .btn,
+    .btn-icon,
+    .report-tab,
+    .nav-link,
+    .status-option,
+    .filter-toggle {
+        min-height: 44px;
+    }
+
+    .btn-icon {
+        min-width: 44px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    /* Stack dialog action buttons full-width for easy tapping */
+    .dialog-actions,
+    .confirm-actions {
+        flex-direction: column-reverse;
+    }
+
+    .dialog-actions .btn,
+    .confirm-actions .btn {
+        width: 100%;
+        justify-content: center;
+    }
+}
+
+/* ── 18.5 Table affordance on small screens ──────────────────
+   Tables scroll horizontally inside .table-wrapper; add a
+   subtle inset shadow hint and keep headers readable.         */
+.table-wrapper {
+    -webkit-overflow-scrolling: touch;
+    position: relative;
+}
+
+@media (max-width: 600px) {
+    .report-table,
+    .history-table {
+        font-size: 0.82rem;
+    }
+
+    th, td {
+        padding: var(--space-sm);
+    }
+
+    /* Prevent the actions column from collapsing too far */
+    .report-action-cell,
+    .history-action-cell {
+        white-space: nowrap;
+    }
+}
+
+/* ── 18.6 Consistent section spacing ─────────────────────────
+   Normalise the gap between the section header and injected
+   content across all five sections.                           */
+.section-body {
+    margin-top: var(--space-md);
+}
+
+/* Cards and report/history views share a consistent rhythm */
+.report-view,
+.history-view,
+.attendance-roster-card,
+.student-detail-card,
+.course-detail-card {
+    margin-bottom: var(--space-md);
+}
+
+/* ── 18.7 Empty-state consistency ────────────────────────────
+   Uniform vertical rhythm and max width so every empty state
+   (students, courses, attendance, history, reports) matches.  */
+.empty-state {
+    max-width: 420px;
+    margin-left: auto;
+    margin-right: auto;
+}
+
+/* ── 18.8 Toast responsiveness ───────────────────────────────
+   On narrow screens span the width with a small margin so long
+   messages remain readable.                                    */
+@media (max-width: 480px) {
+    .toast-container {
+        left: var(--space-sm);
+        right: var(--space-sm);
+        bottom: var(--space-sm);
+        max-width: none;
+        width: auto;
+    }
+}
+
+/* ── 18.9 Modal sizing on small screens ──────────────────────
+   Keep dialogs within the viewport with internal scrolling for
+   tall forms (e.g. the course form with description).          */
+@media (max-width: 520px) {
+    .student-form-dialog,
+    .course-form-dialog,
+    .confirm-dialog {
+        max-height: calc(100vh - 2 * var(--space-md));
+        overflow-y: auto;
+    }
+}
+
+/* ── 18.10 Selector layout consistency (attendance) ──────────
+   Ensure the course/date selectors stack cleanly on mobile.    */
+@media (max-width: 480px) {
+    .attendance-selector__fields {
+        flex-direction: column;
+    }
+
+    .attendance-selector__fields .form-group {
+        flex: 1 1 auto;
+    }
+}
+
+/* ── 18.11 High-contrast mode hint ───────────────────────────
+   Provide a visible border on key surfaces under forced colors
+   so component boundaries survive Windows High Contrast.       */
+@media (forced-colors: active) {
+    .card,
+    .student-card,
+    .course-card,
+    .report-view,
+    .history-view,
+    .confirm-dialog,
+    .student-form-dialog,
+    .course-form-dialog {
+        border: 1px solid CanvasText;
+    }
+
+    .btn {
+        border: 1px solid CanvasText;
+    }
 }
