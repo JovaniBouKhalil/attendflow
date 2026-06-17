@@ -12,6 +12,12 @@
 
 'use strict';
 
+/**
+ * Tracks the currently displayed history view so it can be re-rendered
+ * after an edit. { type: 'student'|'course', id: string }
+ */
+let _historyContext = null;
+
 // ─── Student history ──────────────────────────────────────────────────────────
 
 /**
@@ -32,6 +38,8 @@ function openStudentHistory(studentId) {
     if (typeof navigateToDetail === 'function') {
         navigateToDetail('students', `${student.name} — History`);
     }
+
+    _historyContext = { type: 'student', id: studentId };
 
     showLoading();
     const groups = getStudentAttendance(studentId);   // grouped by course
@@ -87,6 +95,7 @@ function _wireStudentHistoryBack(studentId) {
             }
         });
     }
+    _wireAttendanceEditButtons();
 }
 
 // ─── Course history ───────────────────────────────────────────────────────────
@@ -108,6 +117,8 @@ function openCourseHistory(courseCode) {
     if (typeof navigateToDetail === 'function') {
         navigateToDetail('courses', `${course.name} — History`);
     }
+
+    _historyContext = { type: 'course', id: courseCode };
 
     showLoading();
     const groups = getCourseAttendance(courseCode);    // grouped by date desc
@@ -164,6 +175,7 @@ function _wireCourseHistoryBack(courseCode) {
             }
         });
     }
+    _wireAttendanceEditButtons();
 }
 
 // ─── Shared builders ──────────────────────────────────────────────────────────
@@ -187,10 +199,29 @@ function _buildHistoryTable(records, context) {
             ? escapeHTML(_formatDisplayDate(rec.date))
             : escapeHTML(_resolveStudentName(rec.studentId));
 
+        const recId = escapeHTML(rec.id);
+
         return `
-            <tr>
+            <tr data-record-id="${recId}">
                 <td>${firstCell}</td>
-                <td>${_statusBadge(rec.status)}</td>
+                <td class="history-status-cell" data-record-id="${recId}">
+                    ${_statusBadge(rec.status)}
+                </td>
+                <td class="history-action-cell">
+                    <button class="btn btn-icon btn-edit-attendance"
+                            type="button"
+                            data-record-id="${recId}"
+                            data-current-status="${escapeHTML(rec.status)}"
+                            aria-label="Edit attendance status">
+                        <svg aria-hidden="true" focusable="false"
+                             xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"
+                             width="18" height="18" fill="currentColor">
+                            <path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3
+                                     17.25zM20.71 7.04a1 1 0 0 0 0-1.41l-2.34-2.34a1
+                                     1 0 0 0-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z"/>
+                        </svg>
+                    </button>
+                </td>
             </tr>`;
     }).join('');
 
@@ -201,6 +232,7 @@ function _buildHistoryTable(records, context) {
                     <tr>
                         <th scope="col">${firstCol}</th>
                         <th scope="col">Status</th>
+                        <th scope="col"><span class="sr-only">Actions</span></th>
                     </tr>
                 </thead>
                 <tbody>
@@ -294,4 +326,128 @@ function _formatDisplayDate(dateStr) {
     return date.toLocaleDateString(undefined, {
         weekday: 'short', year: 'numeric', month: 'short', day: 'numeric'
     });
+}
+
+// ─── Task 14.2: Editing attendance status from history ────────────────────────
+
+/**
+ * Wire all "Edit attendance" buttons in the current history view.
+ * Called after every history render.
+ */
+function _wireAttendanceEditButtons() {
+    document.querySelectorAll('.btn-edit-attendance').forEach(btn => {
+        btn.addEventListener('click', () => {
+            const recordId      = btn.getAttribute('data-record-id');
+            const currentStatus = btn.getAttribute('data-current-status');
+            _startInlineStatusEdit(recordId, currentStatus, btn);
+        });
+    });
+}
+
+/**
+ * Replace a status cell with an inline editor (select + Save/Cancel).
+ * Requirements: 4.9
+ *
+ * @param {string} recordId
+ * @param {string} currentStatus - 'present' | 'absent'
+ * @param {HTMLElement} editBtn  - the edit button that was clicked
+ */
+function _startInlineStatusEdit(recordId, currentStatus, editBtn) {
+    const cell = document.querySelector(
+        `.history-status-cell[data-record-id="${CSS.escape(recordId)}"]`
+    );
+    if (!cell) return;
+
+    // Hide the row's edit button while editing
+    if (editBtn) editBtn.classList.add('hidden');
+
+    // Preserve the current cell content so Cancel can restore it
+    const original = cell.innerHTML;
+
+    cell.innerHTML = `
+        <div class="status-edit" role="group" aria-label="Edit attendance status">
+            <select class="status-edit__select" aria-label="Attendance status">
+                <option value="present" ${currentStatus === 'present' ? 'selected' : ''}>
+                    Present
+                </option>
+                <option value="absent" ${currentStatus === 'absent' ? 'selected' : ''}>
+                    Absent
+                </option>
+            </select>
+            <button type="button" class="btn btn-success btn-sm status-edit__save"
+                    aria-label="Save attendance status">Save</button>
+            <button type="button" class="btn btn-secondary btn-sm status-edit__cancel"
+                    aria-label="Cancel editing">Cancel</button>
+        </div>`;
+
+    const select = cell.querySelector('.status-edit__select');
+    const saveBtn = cell.querySelector('.status-edit__save');
+    const cancelBtn = cell.querySelector('.status-edit__cancel');
+
+    if (select) select.focus();
+
+    // Cancel — restore original cell and show the edit button again
+    function cancel() {
+        cell.innerHTML = original;
+        if (editBtn) editBtn.classList.remove('hidden');
+    }
+
+    cancelBtn.addEventListener('click', cancel);
+
+    // Escape cancels
+    cell.addEventListener('keydown', e => {
+        if (e.key === 'Escape') { e.preventDefault(); cancel(); }
+    });
+
+    // Save
+    saveBtn.addEventListener('click', () => {
+        _saveInlineStatusEdit(recordId, select.value);
+    });
+}
+
+/**
+ * Persist an edited attendance status and refresh the view + statistics.
+ * Requirements: 4.10, 4.11, 4.12
+ *
+ * @param {string} recordId
+ * @param {string} newStatus - 'present' | 'absent'
+ */
+function _saveInlineStatusEdit(recordId, newStatus) {
+    showLoading();
+
+    // Update the record via the existing module function (Requirement 4.10)
+    const result = updateAttendanceRecord(recordId, newStatus);
+
+    if (!result.success) {
+        hideLoading();
+        // Validation / failure feedback (Requirement 4.12)
+        showError('Could not update attendance: ' +
+                  result.errors.map(e => e.message).join(', '));
+        return;
+    }
+
+    // Recalculate absence rate + at-risk status for the affected pair
+    // (Requirements 4.11, 7.7)
+    if (typeof recalculateStatistics === 'function' && result.record) {
+        recalculateStatistics(result.record.studentId, result.record.courseCode);
+    }
+
+    hideLoading();
+    showSuccess('Attendance updated.');
+
+    // Re-render the current history view so it reflects the change
+    _rerenderHistory();
+}
+
+/**
+ * Re-render whichever history view is currently active.
+ * Uses _historyContext set by the open* functions.
+ */
+function _rerenderHistory() {
+    if (!_historyContext) return;
+    if (_historyContext.type === 'student') {
+        openStudentHistory(_historyContext.id);
+    } else if (_historyContext.type === 'course') {
+        openCourseHistory(_historyContext.id);
+    }
 }
