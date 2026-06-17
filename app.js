@@ -152,6 +152,11 @@ function navigateTo(sectionName) {
         section.classList.toggle('active', isActive);
     });
 
+    // ── Refresh the section's data so it reflects the latest state ─
+    // Single integration point (Task 17): any change made in another
+    // section is picked up the moment the user views this one.
+    refreshSection(sectionName);
+
     // ── Clear breadcrumb for top-level sections ───────────────────
     clearBreadcrumb();
 
@@ -159,6 +164,37 @@ function navigateTo(sectionName) {
     // This aids screen-reader users who navigate via the menu
     const main = document.getElementById('main-content');
     if (main) main.focus();
+}
+
+/**
+ * Re-render a section's content from current storage data.
+ * Called on every top-level navigation so sections never show stale data.
+ * Requirements: 6.* (reports current), 7.3/7.7 (at-risk sync), 10.* (navigation)
+ *
+ * @param {string} sectionName - students | courses | attendance | reports
+ */
+function refreshSection(sectionName) {
+    switch (sectionName) {
+        case 'students':
+            // Refresh rows + at-risk badges; preserves the filter/toolbar
+            if (typeof refreshStudentList === 'function') refreshStudentList();
+            break;
+        case 'courses':
+            // Refresh rows + enrolled counts
+            if (typeof refreshCourseList === 'function') refreshCourseList();
+            break;
+        case 'attendance':
+            // Rebuild the selector so newly added courses / enrollment
+            // changes appear; recording state is transient
+            if (typeof renderAttendanceSection === 'function') renderAttendanceSection();
+            break;
+        case 'reports':
+            // Rebuild tabs + the active report with fresh figures
+            if (typeof renderReportsSection === 'function') renderReportsSection();
+            break;
+        default:
+            break;
+    }
 }
 
 /**
