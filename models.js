@@ -900,8 +900,11 @@ function findCourseByCourseCode(courses, courseCode) {
  * @returns {Enrollment|null} Enrollment instance or null if not found
  */
 function findEnrollment(enrollments, studentId, courseCode) {
-    return enrollments.find(enrollment => 
-        enrollment.matches(studentId, courseCode)
+    // Compare fields directly: items from Local Storage are plain objects,
+    // not Enrollment instances, so they have no matches() method.
+    return enrollments.find(enrollment =>
+        enrollment.studentId === studentId &&
+        enrollment.courseCode === courseCode
     ) || null;
 }
 
