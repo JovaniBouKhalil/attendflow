@@ -1956,3 +1956,81 @@ tbody tr:hover {
     border-color: var(--color-accent);
     box-shadow: 0 0 0 3px rgba(26, 188, 156, 0.25);
 }
+
+/* ============================================================
+   Task 15.1 — Reports: Course Summary
+   ============================================================ */
+
+.report-view {
+    padding: var(--space-lg);
+}
+
+.report-view__title {
+    margin: 0;
+    font-size: 1.2rem;
+    color: var(--color-primary);
+}
+
+.report-view__subtitle {
+    margin: var(--space-xs) 0 var(--space-md);
+    font-size: 0.9rem;
+}
+
+.report-view__header {
+    margin-bottom: var(--space-md);
+    padding-bottom: var(--space-md);
+    border-bottom: 2px solid var(--color-border-light);
+}
+
+/* Report table */
+.report-table {
+    font-size: 0.88rem;
+}
+
+.report-table th {
+    font-size: 0.8rem;
+}
+
+.report-action-cell {
+    width: 1%;
+    white-space: nowrap;
+    text-align: right;
+}
+
+/* ── Stat tiles in the detailed report ───────────────────── */
+.report-stats {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-md);
+    margin-bottom: var(--space-lg);
+}
+
+.report-stat {
+    flex: 1 1 120px;
+    background: var(--color-bg);
+    border: 1px solid var(--color-border-light);
+    border-radius: var(--radius-sm);
+    padding: var(--space-md);
+    text-align: center;
+}
+
+.report-stat__value {
+    display: block;
+    font-size: 1.4rem;
+    font-weight: 700;
+    color: var(--color-primary);
+}
+
+.report-stat__label {
+    display: block;
+    font-size: 0.78rem;
+    color: var(--color-text-muted);
+    margin-top: var(--space-xs);
+}
+
+/* ── Report actions ──────────────────────────────────────── */
+.report-view__actions {
+    margin-top: var(--space-lg);
+    padding-top: var(--space-md);
+    border-top: 1px solid var(--color-border-light);
+}
