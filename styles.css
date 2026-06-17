@@ -1524,3 +1524,35 @@ tbody tr:hover {
         padding-top: var(--space-sm);
     }
 }
+
+/* ============================================================
+   Task 12.2 — Course Form Dialog
+   ============================================================ */
+
+.course-form-dialog {
+    background: var(--color-surface);
+    border: none;
+    border-radius: var(--radius-md);
+    box-shadow: var(--shadow-lg);
+    padding: 0;
+    max-width: 520px;
+    width: 100%;
+    animation: dialogSlideIn 150ms ease both;
+}
+
+.course-form-dialog[open],
+.course-form-dialog {
+    display: flex;
+    flex-direction: column;
+}
+
+/* Reuse the same form body layout as the student form */
+#course-form {
+    padding: var(--space-lg);
+    background: none;
+    box-shadow: none;
+    margin: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+}
