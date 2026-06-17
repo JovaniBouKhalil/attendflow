@@ -573,6 +573,12 @@ function openCourseDetail(courseCode) {
                         aria-label="Edit ${escapeHTML(course.name)}">
                     Edit
                 </button>
+                <button class="btn btn-secondary"
+                        type="button"
+                        id="btn-detail-history-course"
+                        aria-label="View attendance history for ${escapeHTML(course.name)}">
+                    View History
+                </button>
                 <button class="btn btn-danger"
                         type="button"
                         id="btn-detail-delete-course"
@@ -588,6 +594,9 @@ function openCourseDetail(courseCode) {
     });
     document.getElementById('btn-detail-edit-course').addEventListener('click', () => {
         openCourseForm(courseCode);
+    });
+    document.getElementById('btn-detail-history-course').addEventListener('click', () => {
+        if (typeof openCourseHistory === 'function') openCourseHistory(courseCode);
     });
     document.getElementById('btn-detail-delete-course').addEventListener('click', () => {
         handleDeleteCourse(courseCode);

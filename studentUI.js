@@ -651,6 +651,12 @@ function openStudentDetail(studentId) {
                         aria-label="Edit ${escapeHTML(student.name)}">
                     Edit
                 </button>
+                <button class="btn btn-secondary"
+                        type="button"
+                        id="btn-detail-history"
+                        aria-label="View attendance history for ${escapeHTML(student.name)}">
+                    View History
+                </button>
                 <button class="btn btn-danger"
                         type="button"
                         id="btn-detail-delete"
@@ -667,6 +673,10 @@ function openStudentDetail(studentId) {
 
     document.getElementById('btn-detail-edit').addEventListener('click', () => {
         openStudentForm(studentId);
+    });
+
+    document.getElementById('btn-detail-history').addEventListener('click', () => {
+        if (typeof openStudentHistory === 'function') openStudentHistory(studentId);
     });
 
     document.getElementById('btn-detail-delete').addEventListener('click', () => {
