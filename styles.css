@@ -2080,3 +2080,23 @@ tbody tr:hover {
     background-color: var(--color-border-light);
     color: var(--color-text-muted);
 }
+
+/* ============================================================
+   Task 15.3 — Reports: At-Risk Student Report
+   ============================================================ */
+
+/* At-risk report title — align the warning icon with the text */
+.report-view__title .at-risk-badge {
+    vertical-align: middle;
+    margin-right: var(--space-xs);
+}
+
+/* Subtle red left accent on at-risk rows */
+.at-risk-row td:first-child {
+    border-left: 3px solid var(--color-danger);
+}
+
+/* Inline at-risk badge spacing within a table cell */
+.at-risk-row .at-risk-badge {
+    margin-right: var(--space-xs);
+}

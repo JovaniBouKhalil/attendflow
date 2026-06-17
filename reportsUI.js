@@ -42,6 +42,14 @@ function renderReportsSection() {
                     aria-controls="reports-output">
                 By Student
             </button>
+            <button class="report-tab"
+                    id="tab-atrisk-report"
+                    role="tab"
+                    type="button"
+                    aria-selected="false"
+                    aria-controls="reports-output">
+                At-Risk
+            </button>
         </div>
 
         <div id="reports-output" role="tabpanel">
@@ -51,6 +59,7 @@ function renderReportsSection() {
     // Wire tab switching
     const courseTab  = document.getElementById('tab-course-report');
     const studentTab = document.getElementById('tab-student-report');
+    const atRiskTab  = document.getElementById('tab-atrisk-report');
 
     courseTab.addEventListener('click', () => {
         _setActiveReportTab('course');
@@ -60,6 +69,10 @@ function renderReportsSection() {
         _setActiveReportTab('student');
         renderStudentSummaryReport();
     });
+    atRiskTab.addEventListener('click', () => {
+        _setActiveReportTab('atrisk');
+        renderAtRiskReport();
+    });
 
     // Default view
     _setActiveReportTab('course');
@@ -68,18 +81,22 @@ function renderReportsSection() {
 
 /**
  * Update the active-tab visual + ARIA state.
- * @param {'course'|'student'} which
+ * @param {'course'|'student'|'atrisk'} which
  */
 function _setActiveReportTab(which) {
-    const courseTab  = document.getElementById('tab-course-report');
-    const studentTab = document.getElementById('tab-student-report');
-    if (!courseTab || !studentTab) return;
+    const tabs = {
+        course:  document.getElementById('tab-course-report'),
+        student: document.getElementById('tab-student-report'),
+        atrisk:  document.getElementById('tab-atrisk-report')
+    };
 
-    const courseActive = which === 'course';
-    courseTab.classList.toggle('active', courseActive);
-    studentTab.classList.toggle('active', !courseActive);
-    courseTab.setAttribute('aria-selected', String(courseActive));
-    studentTab.setAttribute('aria-selected', String(!courseActive));
+    Object.keys(tabs).forEach(key => {
+        const tab = tabs[key];
+        if (!tab) return;
+        const isActive = key === which;
+        tab.classList.toggle('active', isActive);
+        tab.setAttribute('aria-selected', String(isActive));
+    });
 }
 
 // ─── Course summary report ────────────────────────────────────────────────────
@@ -548,4 +565,104 @@ function _wireStudentReportBack() {
             renderStudentSummaryReport();
         });
     }
+}
+
+// ─── Task 15.3: At-Risk Student Report ────────────────────────────────────────
+
+/**
+ * Render the at-risk student report.
+ * Lists every student-course combination with an absence rate >= 30 %,
+ * sorted by absence rate descending (provided by the module).
+ * Requirements: 7.4, 7.5, 7.6
+ */
+function renderAtRiskReport() {
+    const output = document.getElementById('reports-output');
+    if (!output) return;
+
+    if (typeof clearBreadcrumb === 'function') clearBreadcrumb();
+
+    showLoading();
+    const entries = getAtRiskList();   // already sorted by absenceRate desc
+    hideLoading();
+
+    // Empty state — nobody is at risk
+    if (entries.length === 0) {
+        output.innerHTML = `
+            <div class="report-view card">
+                <h3 class="report-view__title">At-Risk Students</h3>
+                <div class="empty-state" role="status" aria-live="polite">
+                    <div class="empty-state-icon" aria-hidden="true">✅</div>
+                    <p class="fw-bold">No at-risk students</p>
+                    <p class="text-muted">
+                        No student has reached a 30% absence rate in any course.
+                    </p>
+                </div>
+            </div>`;
+        return;
+    }
+
+    const rows = entries.map(e => _buildAtRiskRow(e)).join('');
+
+    output.innerHTML = `
+        <div class="report-view card" role="region" aria-label="At-risk student report">
+            <h3 class="report-view__title">
+                <span class="at-risk-badge" aria-hidden="true">
+                    <svg aria-hidden="true" focusable="false"
+                         xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"
+                         width="20" height="20" fill="currentColor">
+                        <path d="M1 21h22L12 2 1 21zm12-3h-2v-2h2v2zm0-4h-2v-4h2v4z"/>
+                    </svg>
+                </span>
+                At-Risk Students
+            </h3>
+            <p class="report-view__subtitle text-muted">
+                Students with an absence rate of 30% or higher in a course,
+                ordered by highest absence rate first.
+            </p>
+
+            <div class="table-wrapper">
+                <table class="report-table">
+                    <thead>
+                        <tr>
+                            <th scope="col">Student</th>
+                            <th scope="col">Course</th>
+                            <th scope="col">Absences</th>
+                            <th scope="col">Sessions</th>
+                            <th scope="col">Absence Rate</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        ${rows}
+                    </tbody>
+                </table>
+            </div>
+        </div>`;
+}
+
+/**
+ * Build one row of the at-risk report.
+ * Requirements: 7.5, 7.6
+ *
+ * @param {Object} entry - { studentName, courseName, absences, totalSessions, absenceRate }
+ * @returns {string} HTML
+ */
+function _buildAtRiskRow(entry) {
+    return `
+        <tr class="at-risk-row">
+            <td>
+                <span class="at-risk-badge" title="At-risk student" aria-label="At-risk">
+                    <svg aria-hidden="true" focusable="false"
+                         xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"
+                         width="14" height="14" fill="currentColor">
+                        <path d="M1 21h22L12 2 1 21zm12-3h-2v-2h2v2zm0-4h-2v-4h2v4z"/>
+                    </svg>
+                    <span class="sr-only">At-risk</span>
+                </span>
+                ${escapeHTML(entry.studentName)}
+            </td>
+            <td>${escapeHTML(entry.courseName)}</td>
+            <td>${entry.absences}</td>
+            <td>${entry.totalSessions}</td>
+            <td>${_rateBadge(entry.absenceRate)}</td>
+        </tr>`;
 }
