@@ -1556,3 +1556,190 @@ tbody tr:hover {
     flex-direction: column;
     gap: 0;
 }
+
+/* ============================================================
+   Task 13.1 — Attendance Recording UI
+   ============================================================ */
+
+/* ── Selector card ───────────────────────────────────────── */
+.attendance-selector {
+    margin-bottom: var(--space-md);
+}
+
+.attendance-selector__fields {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-md);
+}
+
+.attendance-selector__fields .form-group {
+    flex: 1 1 220px;
+    margin-bottom: 0;
+}
+
+/* ── Roster card ─────────────────────────────────────────── */
+.attendance-roster-card {
+    padding: var(--space-lg);
+}
+
+.attendance-roster__header {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--space-sm);
+    margin-bottom: var(--space-md);
+    padding-bottom: var(--space-sm);
+    border-bottom: 1px solid var(--color-border-light);
+}
+
+.attendance-roster__title {
+    margin: 0;
+    font-size: 1.1rem;
+}
+
+.attendance-roster__count {
+    font-size: 0.85rem;
+    font-weight: 400;
+}
+
+.attendance-bulk {
+    display: flex;
+    gap: var(--space-xs);
+}
+
+/* Small button modifier */
+.btn-sm {
+    font-size: 0.8rem;
+    padding: 0.3rem 0.7rem;
+}
+
+/* ── Attendance list ─────────────────────────────────────── */
+.attendance-list {
+    list-style: none;
+    display: flex;
+    flex-direction: column;
+}
+
+.attendance-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--space-md);
+    padding: var(--space-sm) var(--space-xs);
+    border-bottom: 1px solid var(--color-border-light);
+    border-left: 3px solid transparent;
+    transition: background-color var(--transition-fast);
+}
+
+.attendance-row:last-child {
+    border-bottom: none;
+}
+
+/* Highlight rows flagged as unmarked on save */
+.attendance-row--error {
+    border-left-color: var(--color-danger);
+    background-color: #fdecea;
+}
+
+/* Student identity within a row */
+.attendance-row__student {
+    display: flex;
+    align-items: center;
+    gap: var(--space-sm);
+    min-width: 0;
+    flex: 1;
+}
+
+.student-avatar--sm {
+    width: 34px;
+    height: 34px;
+    font-size: 0.8rem;
+}
+
+.attendance-row__info {
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+}
+
+.attendance-row__name {
+    font-weight: 600;
+    font-size: 0.95rem;
+}
+
+.attendance-row__id {
+    font-size: 0.78rem;
+}
+
+/* ── Present / Absent controls ───────────────────────────── */
+.attendance-row__controls {
+    display: flex;
+    gap: var(--space-xs);
+    flex-shrink: 0;
+}
+
+.status-option {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--space-xs);
+    padding: 0.35rem 0.7rem;
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-sm);
+    font-size: 0.82rem;
+    font-weight: 500;
+    cursor: pointer;
+    user-select: none;
+    transition: background-color var(--transition-fast),
+                border-color    var(--transition-fast),
+                color           var(--transition-fast);
+}
+
+/* Hide the native radio but keep it accessible */
+.status-option input[type="radio"] {
+    position: absolute;
+    opacity: 0;
+    width: 0;
+    height: 0;
+}
+
+/* Checked styling — present = green, absent = red */
+.status-option--present:has(input:checked) {
+    background-color: #d5f5e3;
+    border-color: var(--color-success);
+    color: var(--color-success-dark);
+}
+
+.status-option--absent:has(input:checked) {
+    background-color: #fadbd8;
+    border-color: var(--color-danger);
+    color: var(--color-danger-dark);
+}
+
+/* Visible focus ring when radio is focused via keyboard */
+.status-option:focus-within {
+    box-shadow: var(--focus-ring);
+}
+
+/* ── Save action row ─────────────────────────────────────── */
+.attendance-actions {
+    display: flex;
+    justify-content: flex-end;
+    margin-top: var(--space-md);
+    padding-top: var(--space-md);
+    border-top: 1px solid var(--color-border-light);
+}
+
+/* ── Responsive: stack row contents on small screens ─────── */
+@media (max-width: 480px) {
+    .attendance-row {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: var(--space-sm);
+    }
+
+    .attendance-row__controls {
+        width: 100%;
+        justify-content: flex-start;
+    }
+}

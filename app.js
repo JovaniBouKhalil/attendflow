@@ -48,6 +48,7 @@ function initializeApp() {
     // 3. Render section UIs
     renderStudentSection();
     renderCourseSection();
+    renderAttendanceSection();
 
     // 4. Show the default section
     navigateTo('students');
