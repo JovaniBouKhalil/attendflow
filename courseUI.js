@@ -549,13 +549,16 @@ function openCourseDetail(courseCode) {
                 <dd>${escapeHTML(course.courseCode)}</dd>
 
                 <dt>Enrolled</dt>
-                <dd>${enrolledCount} student${enrolledCount !== 1 ? 's' : ''}</dd>
+                <dd><span id="course-enrolled-count">${enrolledCount} student${enrolledCount !== 1 ? 's' : ''}</span></dd>
 
                 <dt>Description</dt>
                 <dd>${course.description
                         ? escapeHTML(course.description)
                         : '<span class="text-muted">No description</span>'}</dd>
             </dl>
+
+            <!-- Enrollment management panel (Task 13.2) -->
+            <div id="course-enrollment-panel"></div>
 
             <div class="course-detail-card__actions">
                 <button class="btn btn-secondary"
@@ -589,6 +592,11 @@ function openCourseDetail(courseCode) {
     document.getElementById('btn-detail-delete-course').addEventListener('click', () => {
         handleDeleteCourse(courseCode);
     });
+
+    // Mount the enrollment manager panel (Task 13.2)
+    if (typeof renderEnrollmentManager === 'function') {
+        renderEnrollmentManager(courseCode, 'course-enrollment-panel');
+    }
 }
 
 // ─── Delete workflow ──────────────────────────────────────────────────────────
